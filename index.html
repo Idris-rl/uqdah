@@ -255,7 +255,26 @@ tr.hl td { background: var(--amber-soft); }
   nav.views { order: 3; width: 100%; }
 }
 
-.q { display: grid; gap: 16px; max-width: 640px; margin: 48px auto 64px; }
+.top .wrap, #view-simple { max-width: 1160px; }
+#view-simple { padding-block: 0; margin-block: 0; }
+.q { display: grid; gap: 28px; padding-block: 32px 48px; }
+.q-in { display: grid; gap: 16px; align-content: start; }
+.q-empty { border: 1px dashed var(--line); border-radius: 12px; padding: 40px 22px; text-align: center; color: var(--ink-3); font-size: 15px; }
+.q-ans { align-content: start; }
+.q-more { justify-self: start; }
+.scrim { position: fixed; inset: 0; background: rgba(10, 16, 24, .32); z-index: 30; }
+.drawer { position: fixed; top: 0; bottom: 0; inset-inline-end: 0; width: min(520px, 100vw); background: var(--bg); border-inline-start: 1px solid var(--line); z-index: 31; display: flex; flex-direction: column; transform: translateX(100%); visibility: hidden; transition: transform .22s ease, visibility 0s linear .22s; box-shadow: -12px 0 32px rgba(10, 16, 24, .12); }
+[dir="rtl"] .drawer { transform: translateX(-100%); }
+.drawer.open { transform: none; visibility: visible; transition: transform .22s ease; }
+.drawer-h { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.drawer-h h2 { font-size: 18px; font-weight: 600; }
+.drawer-b { overflow-y: auto; padding: 20px; overscroll-behavior: contain; }
+@media (prefers-reduced-motion: reduce) { .drawer, .drawer.open { transition: none; } }
+@media (min-width: 900px) {
+  .q { box-sizing: border-box; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; min-height: calc(100dvh - 64px); align-items: center; padding-block: 24px; }
+  .q-in, .q-ans { align-self: center; }
+  .q textarea { min-height: 240px; }
+}
 .q h1 { font-size: 26px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; }
 .q textarea { min-height: 150px; font-size: 15.5px; line-height: 1.55; }
 .q-actions { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
@@ -269,7 +288,7 @@ tr.hl td { background: var(--amber-soft); }
 .q-links { display: flex; gap: 20px; font-size: 14.5px; }
 .q-links a { color: var(--ink-2); text-underline-offset: 3px; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-@media (max-width: 600px) { .q { margin-top: 28px; } .q h1 { font-size: 21px; } }
+@media (max-width: 600px) { .q { padding-top: 24px; } .q h1 { font-size: 21px; } }
 .q-seg { margin-top: 8px; }
 .q-links-list { display: grid; gap: 0; margin-top: 8px; }
 .q-link { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
@@ -1254,6 +1273,7 @@ Object.assign(T.en, {
     green: () => "No insured event needs the same supplier or venue on these dates.",
     pending: () => "A supplier in the text looks like one already in the portfolio. Confirm it under Details."
   },
+  sEmpty: "The answer appears here.",
   sDetails: "Details", sRead: "What Uqdah read from the text", sConfirm: "To confirm",
   sExNote: "This example was read earlier by the same model. Pasted text is read live in your browser.",
   sFoot: "Made-up test data. Uqdah does not price or decide cover. The underwriter decides. The limit of SAR 10M is an example from the research study.",
@@ -1284,6 +1304,7 @@ Object.assign(T.ar, {
     green: () => "لا توجد فعالية مؤمّن عليها تحتاج المورّد أو الموقع نفسه في هذه التواريخ.",
     pending: () => "اسم مورّد في النص يشبه اسمًا موجودًا في المحفظة. أكّده في التفاصيل."
   },
+  sEmpty: "يظهر الجواب هنا.",
   sDetails: "التفاصيل", sRead: "ما قرأته عُقدة من النص", sConfirm: "للتأكيد",
   sExNote: "هذا المثال قرأه النموذج نفسه مسبقًا. النص الذي تلصقه يُقرأ مباشرة في متصفحك.",
   sFoot: "بيانات تجريبية مصطنعة. عُقدة لا تسعّر ولا تقرر التغطية، القرار للمكتتب. حد 10 ملايين ريال مثال من الدراسة البحثية.",
@@ -1297,7 +1318,7 @@ Object.assign(T.ar, {
   cHint: "أعلى تعويض محتمل في يوم واحد إذا تعطّل هذا المورّد أو الموقع وحده، كنسبة من الحد.",
   cRow: (n, d) => `${n} فعاليات في ${d}`
 });
-const Q = { text: "", busy: false, pct: null, status: "", err: "", r: null, ex: false };
+const Q = { drawer: false, text: "", busy: false, pct: null, status: "", err: "", r: null, ex: false };
 function qApp() {
   const r = Q.r; if (!r) return null;
   const deps = ["venue", "power", "stage"].filter(k => r[k]).map(k => ({ role: k, raw: r[k].name, cr: r[k].cr || "" }));
@@ -1331,7 +1352,7 @@ function qAnswer() {
   const cs = concentration();
   const conc = `<div><p class="section-label">${esc(t("cTitle"))}</p><p class="form-hint">${esc(t("cHint"))}</p>${cs.map(c => { const pc = Math.round(c.peak / LIMIT * 100); return `<div class="q-conc"><div class="pbar-top"><span><b>${esc(L(ENT[c.id].name))}</b> <small>${esc(t("cRow")(c.n, dfmt(c.at)))}</small></span><b class="num">${pc}%</b></div><div class="track" style="height:8px"><div class="fill" style="width:${Math.min(100, pc)}%"></div></div></div>`; }).join("")}</div>`;
   return `<section class="answer ${v === "pending" ? "amber" : v}" aria-live="polite"><span class="tag">${esc(t("sTag")[v])}</span><h2>${esc(head)}</h2>${line ? `<p>${esc(line)}</p>` : ""}</section>
-    <details class="q-details"${(v === "pending") ? " open" : ""}><summary>${esc(t("sDetails"))}</summary><div class="d-body q-body">
+    <button type="button" class="btn q-more" data-q="det" aria-controls="qDrawer" aria-expanded="${Q.drawer}">${esc(t("sDetails"))}</button><div class="q-body">
       ${confirms || unclear ? `<div><p class="section-label">${esc(t("sConfirm"))}</p><div class="checks">${confirms}${unclear}</div></div>` : ""}
       ${outage}
       ${graph}
@@ -1342,25 +1363,49 @@ function qAnswer() {
       <div><p class="section-label">${esc(t("sRead"))}</p>${read}${Q.ex ? `<p class="form-hint">${esc(t("sExNote"))}</p>` : ""}</div>
       <p class="form-hint">${esc(t("sFoot"))}</p>
       <p class="q-links"><a href="#check">${esc(t("sFull"))}</a><a href="#how">${esc(t("sHow"))}</a></p>
-    </div></details>`;
+    </div>`;
 }
+const qParts = () => { const h = qAnswer(); const i = h.indexOf("\u0001"); return i < 0 ? [h, ""] : [h.slice(0, i), h.slice(i + 1)]; };
+function qRefresh() {
+  const [ans, body] = qParts();
+  const a = document.getElementById("qAns"); if (a) a.innerHTML = ans || qEmpty();
+  const d = document.getElementById("qDrawerBody"); if (d) { const y = d.scrollTop; d.innerHTML = body; d.scrollTop = y; }
+  qDrawerState();
+}
+const qEmpty = () => `<div class="q-empty">${esc(t("sEmpty"))}</div>`;
+function qDrawerState() {
+  const open = !!(Q.drawer && Q.r);
+  const dr = document.getElementById("qDrawer"), sc = document.getElementById("qScrim");
+  if (dr) { dr.classList.toggle("open", open); dr.setAttribute("aria-hidden", String(!open)); dr.inert = !open; }
+  if (sc) sc.hidden = !open;
+  const b = document.querySelector('[data-q="det"]'); if (b) b.setAttribute("aria-expanded", String(open));
+}
+function qSetDrawer(v) { Q.drawer = v; qDrawerState(); if (v) { const c = document.querySelector("#qDrawer [data-q=close]"); if (c) c.focus({ preventScroll: true }); } else { const b = document.querySelector('[data-q="det"]'); if (b) b.focus({ preventScroll: true }); } }
 function renderSimple() {
-  const el = document.getElementById("view-simple");
-  el.innerHTML = `<section class="q">
-    <h1>${esc(t("sH"))}</h1>
-    <label class="sr" for="qText">${esc(t("sLabel"))}</label>
-    <textarea id="qText" rows="6" placeholder="${esc(t("sPh"))}">${esc(Q.text)}</textarea>
-    <div class="q-actions"><button type="button" class="btn btn-primary btn-lg" data-q="check"${Q.busy ? " disabled" : ""}>${esc(t("sCheck"))}</button><button type="button" class="linkbtn" data-q="ex"${Q.busy ? " disabled" : ""}>${esc(t("sExample"))}</button></div>
-    <div id="qStatus" class="ai-status" role="status">${qStatus()}</div>
-    ${Q.err ? `<p class="ai-warn">${esc(Q.err)}</p>` : ""}
-    <div id="qAns" class="q-ans">${qAnswer()}</div>
-  </section>`;
+  const el = document.getElementById("view-simple"), [ans, body] = qParts();
+  el.innerHTML = `<div class="q">
+    <section class="q-in">
+      <h1>${esc(t("sH"))}</h1>
+      <label class="sr" for="qText">${esc(t("sLabel"))}</label>
+      <textarea id="qText" rows="9" placeholder="${esc(t("sPh"))}">${esc(Q.text)}</textarea>
+      <div class="q-actions"><button type="button" class="btn btn-primary btn-lg" data-q="check"${Q.busy ? " disabled" : ""}>${esc(t("sCheck"))}</button><button type="button" class="linkbtn" data-q="ex"${Q.busy ? " disabled" : ""}>${esc(t("sExample"))}</button></div>
+      <div id="qStatus" class="ai-status" role="status">${qStatus()}</div>
+      ${Q.err ? `<p class="ai-warn">${esc(Q.err)}</p>` : ""}
+    </section>
+    <section id="qAns" class="q-ans" aria-live="polite">${ans || qEmpty()}</section>
+  </div>
+  <div class="scrim" id="qScrim" data-q="close" hidden></div>
+  <aside class="drawer" id="qDrawer" aria-label="${esc(t("sDetails"))}" aria-hidden="true">
+    <div class="drawer-h"><h2>${esc(t("sDetails"))}</h2><button type="button" class="btn" data-q="close">${esc(t("close"))}</button></div>
+    <div class="drawer-b" id="qDrawerBody">${body}</div>
+  </aside>`;
+  qDrawerState();
 }
 function qStatus() { return Q.status ? `${esc(Q.status)}${Q.pct != null ? `<div class="track" style="margin-top:6px;height:6px"><div class="fill now" style="width:${Q.pct}%"></div></div>` : ""}` : ""; }
 async function qCheck() {
   const box = document.getElementById("qText"); Q.text = box ? box.value : Q.text;
   if (!Q.text.trim()) { box && box.focus(); return; }
-  Q.err = ""; Q.r = null; Q.ex = false; Q.busy = true; S.match = {}; S.excl = {}; delete S.decision.paste;
+  Q.err = ""; Q.r = null; Q.ex = false; Q.busy = true; Q.drawer = false; S.match = {}; S.excl = {}; delete S.decision.paste;
   const which = Q.text.trim() === AI_EX.en.trim() ? "en" : Q.text.trim() === AI_EX.ar.trim() ? "ar" : null;
   const upd = () => { const st = document.getElementById("qStatus"); if (st) st.innerHTML = qStatus(); };
   try {
@@ -1378,21 +1423,26 @@ async function qCheck() {
   }
   Q.busy = false; Q.status = ""; Q.pct = null;
   renderSimple();
-  const ans = document.getElementById("qAns"); if (ans && ans.firstElementChild) ans.scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  const ans = document.getElementById("qAns"); if (ans && ans.firstElementChild && innerWidth < 900) ans.scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
 }
 const qv = document.getElementById("view-simple");
 qv.addEventListener("click", e => {
+  if (e.target.id === "qScrim") { qSetDrawer(false); return; }
+  if (e.target.closest(".q-links a")) { Q.drawer = false; qDrawerState(); return; }
   const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.q === "det") { qSetDrawer(!Q.drawer); return; }
+  if (b.dataset.q === "close") { qSetDrawer(false); return; }
   if (b.dataset.q === "ex") { Q.text = AI_EX[S.lang]; Q.r = null; Q.err = ""; renderSimple(); qCheck(); return; }
   if (b.dataset.q === "check") { qCheck(); return; }
   if (b.dataset.o != null || b.dataset.x || b.dataset.d) {
     if (b.dataset.d) S.decision.paste = S.decision.paste === b.dataset.d ? undefined : b.dataset.d;
     else if (b.dataset.o != null) S.outage = +b.dataset.o; else { if (S.excl[b.dataset.x]) delete S.excl[b.dataset.x]; else S.excl[b.dataset.x] = 1; }
-    const y = window.scrollY; document.getElementById("qAns").innerHTML = qAnswer(); const d2 = qv.querySelector(".q-details"); if (d2) d2.open = true; window.scrollTo(0, y); return;
+    qRefresh(); return;
   }
-  if (b.dataset.m != null) { if (b.dataset.v) S.match[b.dataset.m] = b.dataset.v; else delete S.match[b.dataset.m]; const d = qv.querySelector(".q-details"); const open = d && d.open; document.getElementById("qAns").innerHTML = qAnswer(); const d2 = qv.querySelector(".q-details"); if (d2 && open) d2.open = true; }
+  if (b.dataset.m != null) { if (b.dataset.v) S.match[b.dataset.m] = b.dataset.v; else delete S.match[b.dataset.m]; qRefresh(); }
 });
 qv.addEventListener("input", e => { if (e.target.id === "qText") Q.text = e.target.value; });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && Q.drawer && !document.getElementById("docDlg").open) qSetDrawer(false); });
 qv.addEventListener("keydown", e => { if (e.target.id === "qText" && e.key === "Enter" && (e.ctrlKey || e.metaKey)) qCheck(); });
 
 /* ================= Events ================= */
