@@ -262,17 +262,18 @@ tr.hl td { background: var(--amber-soft); }
 .q-empty { border: 1px dashed var(--line); border-radius: 12px; padding: 40px 22px; text-align: center; color: var(--ink-3); font-size: 15px; }
 .q-ans { align-content: start; }
 .q-more { justify-self: start; }
-.scrim { position: fixed; inset: 0; background: rgba(10, 16, 24, .32); z-index: 30; }
-.drawer { position: fixed; top: 0; bottom: 0; inset-inline-end: 0; width: min(520px, 100vw); background: var(--bg); border-inline-start: 1px solid var(--line); z-index: 31; display: flex; flex-direction: column; transform: translateX(100%); visibility: hidden; transition: transform .22s ease, visibility 0s linear .22s; box-shadow: -12px 0 32px rgba(10, 16, 24, .12); }
-[dir="rtl"] .drawer { transform: translateX(-100%); }
-.drawer.open { transform: none; visibility: visible; transition: transform .22s ease; }
-.drawer-h { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--line); background: var(--surface); }
-.drawer-h h2 { font-size: 18px; font-weight: 600; }
-.drawer-b { overflow-y: auto; padding: 20px; overscroll-behavior: contain; }
-@media (prefers-reduced-motion: reduce) { .drawer, .drawer.open { transition: none; } }
+.q-det { display: grid; gap: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px; scroll-margin-top: 80px; }
+.q-det[hidden] { display: none; }
+.q-det-h { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.q-det-h h2 { font-size: 18px; font-weight: 600; }
+.q-body { display: grid; gap: 28px; }
+.q-col { display: grid; gap: 24px; align-content: start; min-width: 0; }
+
 @media (min-width: 900px) {
-  .q { box-sizing: border-box; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; min-height: calc(100dvh - 64px); align-items: center; padding-block: 24px; }
-  .q-in, .q-ans { align-self: center; }
+  .q { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 48px; row-gap: 32px; padding-block: 56px 64px; align-items: start; }
+  .q-ans { padding-top: 72px; }
+  .q-det { grid-column: 1 / -1; padding: 28px; }
+  .q-body { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 48px; }
   .q textarea { min-height: 240px; }
 }
 .q h1 { font-size: 26px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; }
@@ -280,7 +281,6 @@ tr.hl td { background: var(--amber-soft); }
 .q-actions { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
 .q-ans { display: grid; gap: 12px; }
 .q-ans:empty { display: none; }
-.q-body { display: grid; gap: 20px; }
 .q-read { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
 .q-read span { color: var(--ink-2); }
 .q-read b { font-weight: 500; text-align: end; }
@@ -1352,18 +1352,19 @@ function qAnswer() {
   const cs = concentration();
   const conc = `<div><p class="section-label">${esc(t("cTitle"))}</p><p class="form-hint">${esc(t("cHint"))}</p>${cs.map(c => { const pc = Math.round(c.peak / LIMIT * 100); return `<div class="q-conc"><div class="pbar-top"><span><b>${esc(L(ENT[c.id].name))}</b> <small>${esc(t("cRow")(c.n, dfmt(c.at)))}</small></span><b class="num">${pc}%</b></div><div class="track" style="height:8px"><div class="fill" style="width:${Math.min(100, pc)}%"></div></div></div>`; }).join("")}</div>`;
   return `<section class="answer ${v === "pending" ? "amber" : v}" aria-live="polite"><span class="tag">${esc(t("sTag")[v])}</span><h2>${esc(head)}</h2>${line ? `<p>${esc(line)}</p>` : ""}</section>
-    <button type="button" class="btn q-more" data-q="det" aria-controls="qDrawer" aria-expanded="${Q.drawer}">${esc(t("sDetails"))}</button><div class="q-body">
+    <button type="button" class="btn q-more" data-q="det" aria-controls="qDrawer" aria-expanded="${Q.drawer}">${esc(t("sDetails"))}</button><div class="q-body"><div class="q-col">
       ${confirms || unclear ? `<div><p class="section-label">${esc(t("sConfirm"))}</p><div class="checks">${confirms}${unclear}</div></div>` : ""}
       ${outage}
       ${graph}
       ${links}
+      </div><div class="q-col">
       ${decide}
       ${conc}
       ${method}
       <div><p class="section-label">${esc(t("sRead"))}</p>${read}${Q.ex ? `<p class="form-hint">${esc(t("sExNote"))}</p>` : ""}</div>
       <p class="form-hint">${esc(t("sFoot"))}</p>
       <p class="q-links"><a href="#check">${esc(t("sFull"))}</a><a href="#how">${esc(t("sHow"))}</a></p>
-    </div>`;
+    </div></div>`;
 }
 const qParts = () => { const h = qAnswer(); const i = h.indexOf("\u0001"); return i < 0 ? [h, ""] : [h.slice(0, i), h.slice(i + 1)]; };
 function qRefresh() {
@@ -1375,12 +1376,10 @@ function qRefresh() {
 const qEmpty = () => `<div class="q-empty">${esc(t("sEmpty"))}</div>`;
 function qDrawerState() {
   const open = !!(Q.drawer && Q.r);
-  const dr = document.getElementById("qDrawer"), sc = document.getElementById("qScrim");
-  if (dr) { dr.classList.toggle("open", open); dr.setAttribute("aria-hidden", String(!open)); dr.inert = !open; }
-  if (sc) sc.hidden = !open;
+  const dr = document.getElementById("qDrawer"); if (dr) dr.hidden = !open;
   const b = document.querySelector('[data-q="det"]'); if (b) b.setAttribute("aria-expanded", String(open));
 }
-function qSetDrawer(v) { Q.drawer = v; qDrawerState(); if (v) { const c = document.querySelector("#qDrawer [data-q=close]"); if (c) c.focus({ preventScroll: true }); } else { const b = document.querySelector('[data-q="det"]'); if (b) b.focus({ preventScroll: true }); } }
+function qSetDrawer(v) { Q.drawer = v; qDrawerState(); const r = matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"; if (v) { const d = document.getElementById("qDrawer"); if (d) d.scrollIntoView({ block: "start", behavior: r }); } else { window.scrollTo({ top: 0, behavior: r }); } }
 function renderSimple() {
   const el = document.getElementById("view-simple"), [ans, body] = qParts();
   el.innerHTML = `<div class="q">
@@ -1393,12 +1392,11 @@ function renderSimple() {
       ${Q.err ? `<p class="ai-warn">${esc(Q.err)}</p>` : ""}
     </section>
     <section id="qAns" class="q-ans" aria-live="polite">${ans || qEmpty()}</section>
-  </div>
-  <div class="scrim" id="qScrim" data-q="close" hidden></div>
-  <aside class="drawer" id="qDrawer" aria-label="${esc(t("sDetails"))}" aria-hidden="true">
-    <div class="drawer-h"><h2>${esc(t("sDetails"))}</h2><button type="button" class="btn" data-q="close">${esc(t("close"))}</button></div>
-    <div class="drawer-b" id="qDrawerBody">${body}</div>
-  </aside>`;
+  <section class="q-det" id="qDrawer" hidden>
+    <div class="q-det-h"><h2>${esc(t("sDetails"))}</h2><button type="button" class="btn" data-q="close">${esc(t("close"))}</button></div>
+    <div id="qDrawerBody">${body}</div>
+  </section>
+  </div>`;
   qDrawerState();
 }
 function qStatus() { return Q.status ? `${esc(Q.status)}${Q.pct != null ? `<div class="track" style="margin-top:6px;height:6px"><div class="fill now" style="width:${Q.pct}%"></div></div>` : ""}` : ""; }
@@ -1427,7 +1425,6 @@ async function qCheck() {
 }
 const qv = document.getElementById("view-simple");
 qv.addEventListener("click", e => {
-  if (e.target.id === "qScrim") { qSetDrawer(false); return; }
   if (e.target.closest(".q-links a")) { Q.drawer = false; qDrawerState(); return; }
   const b = e.target.closest("button"); if (!b) return;
   if (b.dataset.q === "det") { qSetDrawer(!Q.drawer); return; }
@@ -1442,7 +1439,6 @@ qv.addEventListener("click", e => {
   if (b.dataset.m != null) { if (b.dataset.v) S.match[b.dataset.m] = b.dataset.v; else delete S.match[b.dataset.m]; qRefresh(); }
 });
 qv.addEventListener("input", e => { if (e.target.id === "qText") Q.text = e.target.value; });
-document.addEventListener("keydown", e => { if (e.key === "Escape" && Q.drawer && !document.getElementById("docDlg").open) qSetDrawer(false); });
 qv.addEventListener("keydown", e => { if (e.target.id === "qText" && e.key === "Enter" && (e.ctrlKey || e.metaKey)) qCheck(); });
 
 /* ================= Events ================= */
