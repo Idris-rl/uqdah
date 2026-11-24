@@ -1,0 +1,3 @@
+dist/
+.pkgs/
+node_modules/

@@ -1,0 +1,1475 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}body{margin:0}img{max-width:100%}</style>
+<title>Uqdah Prototype</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one centred column that reads top to bottom: application, answer, why, what to check, decision. Details stay folded. */
+:root {
+  --bg: #f5f7fa;
+  --surface: #ffffff;
+  --sunken: #edf1f5;
+  --ink: #142030;
+  --ink-2: #4a5768;
+  --ink-3: #7a8696;
+  --line: #dbe2ea;
+  --accent: #1f5fae;
+  --accent-soft: #e3edf9;
+  --accent-ink: #ffffff;
+  --red: #b3352b;
+  --red-soft: #fbe7e4;
+  --amber: #8a5c00;
+  --amber-soft: #f8edd4;
+  --green: #2e6b3d;
+  --green-soft: #e2f0e4;
+  --font: "IBM Plex Sans", "IBM Plex Sans Arabic", system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+  --font-ar: "IBM Plex Sans Arabic", "IBM Plex Sans", system-ui, Tahoma, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f151c; --surface: #161e27; --sunken: #1d2732; --ink: #e4eaf1; --ink-2: #a7b3c1; --ink-3: #7d8998; --line: #283442;
+    --accent: #7fb0ec; --accent-soft: #1b2d44; --accent-ink: #0d1623;
+    --red: #f08277; --red-soft: #3b201e; --amber: #e3b65e; --amber-soft: #352b17; --green: #8cc79a; --green-soft: #1b3122;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f151c; --surface: #161e27; --sunken: #1d2732; --ink: #e4eaf1; --ink-2: #a7b3c1; --ink-3: #7d8998; --line: #283442;
+  --accent: #7fb0ec; --accent-soft: #1b2d44; --accent-ink: #0d1623;
+  --red: #f08277; --red-soft: #3b201e; --amber: #e3b65e; --amber-soft: #352b17; --green: #8cc79a; --green-soft: #1b3122;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--ink); }
+body { font-family: var(--font); font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased; touch-action: manipulation; }
+html[lang="ar"] body { font-family: var(--font-ar); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3, p { margin: 0; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.3; }
+.num { font-variant-numeric: tabular-nums; }
+
+.wrap { max-width: 860px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+.top .wrap { display: flex; align-items: center; gap: 20px; padding-block: 10px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font-weight: 700; font-size: 20px; font-family: var(--font-ar); }
+nav.views { display: flex; gap: 4px; }
+nav.views a { color: var(--ink-2); text-decoration: none; padding: 8px 12px; border-radius: 8px; font-size: 15px; font-weight: 500; }
+nav.views a[aria-current="page"] { color: var(--ink); background: var(--sunken); }
+.tools { margin-inline-start: auto; display: flex; gap: 8px; }
+.btn { border: 1px solid var(--line); background: var(--surface); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 500; min-height: 40px; }
+.btn:hover { border-color: var(--ink-3); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn-primary:hover { border-color: var(--accent); filter: brightness(1.07); }
+.notice { font-size: 13.5px; color: var(--ink-2); padding-block: 10px 0; }
+
+main { padding-block: 28px 80px; display: grid; gap: 28px; }
+
+/* Sample switch */
+.samples { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.samples span { color: var(--ink-2); font-size: 14px; }
+.seg { display: inline-flex; background: var(--sunken); border-radius: 10px; padding: 4px; gap: 4px; flex-wrap: wrap; }
+.seg button { border: 0; background: transparent; padding: 7px 14px; border-radius: 7px; cursor: pointer; color: var(--ink-2); font-weight: 500; font-size: 14.5px; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(20, 32, 48, .12); }
+
+/* Application */
+.app { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; display: grid; gap: 14px; }
+.app-label { font-size: 14px; color: var(--ink-3); }
+.app h1 { font-size: 26px; font-weight: 600; }
+
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px 20px; }
+.fact dt { font-size: 13.5px; color: var(--ink-3); }
+.fact dd { margin: 0; font-weight: 500; }
+.needs { font-size: 14.5px; color: var(--ink-2); }
+.needs b { color: var(--ink); font-weight: 500; }
+
+/* Answer */
+.answer { border-radius: 12px; padding: 22px; display: grid; gap: 8px; border: 1px solid transparent; }
+.answer.red { background: var(--red-soft); border-color: color-mix(in srgb, var(--red) 30%, transparent); }
+.answer.amber { background: var(--amber-soft); border-color: color-mix(in srgb, var(--amber) 30%, transparent); }
+.answer.green { background: var(--green-soft); border-color: color-mix(in srgb, var(--green) 30%, transparent); }
+.answer .tag { font-size: 14px; font-weight: 600; }
+.answer.red .tag { color: var(--red); } .answer.amber .tag { color: var(--amber); } .answer.green .tag { color: var(--green); }
+.answer h2 { font-size: 22px; font-weight: 600; }
+.answer p { color: var(--ink); max-width: 64ch; }
+
+/* Finding */
+.sec-h { font-size: 18px; font-weight: 600; margin-bottom: 12px; }
+.finding { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; display: grid; gap: 18px; }
+.finding + .finding { margin-top: 14px; }
+.f-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.f-head h3 { font-size: 18px; font-weight: 600; }
+.f-role { color: var(--ink-3); font-size: 14px; }
+.f-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: center; }
+.diagram svg { width: 100%; height: auto; display: block; }
+.diagram text { font-family: var(--font); font-size: 13px; fill: var(--ink-2); }
+html[lang="ar"] .diagram text { font-family: var(--font-ar); }
+.payout { display: grid; gap: 12px; }
+.payout-q { font-weight: 500; }
+.pbar { display: grid; gap: 4px; }
+.pbar-top { display: flex; justify-content: space-between; gap: 8px; font-size: 14.5px; }
+.pbar-top b { font-weight: 600; }
+.track { position: relative; height: 14px; background: var(--sunken); border-radius: 4px; }
+.fill { position: absolute; inset-block: 0; inset-inline-start: 0; border-radius: 4px; background: var(--ink-3); }
+.fill.now { background: var(--accent); }
+.fill.over { background: var(--red); }
+.limit { position: absolute; inset-block: -5px; width: 2px; background: var(--ink); }
+.limit-note { font-size: 13.5px; color: var(--ink-2); display: flex; align-items: center; gap: 8px; }
+.limit-note i { width: 2px; height: 14px; background: var(--ink); display: inline-block; }
+.f-notes { display: grid; gap: 6px; font-size: 14.5px; color: var(--ink-2); border-top: 1px solid var(--line); padding-top: 14px; }
+
+/* Checks */
+.checks { display: grid; gap: 10px; }
+.check { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; display: flex; gap: 14px; align-items: flex-start; flex-wrap: wrap; }
+.check-mark { flex: none; width: 10px; height: 10px; border-radius: 50%; margin-top: 8px; }
+.check-mark.amber { background: var(--amber); } .check-mark.green { background: var(--green); } .check-mark.grey { background: var(--ink-3); }
+.check-text { flex: 1 1 260px; min-width: 0; }
+.check-text small { display: block; color: var(--ink-3); font-size: 13.5px; }
+.check-actions { display: flex; gap: 8px; }
+
+/* Decision */
+.decide { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; display: grid; gap: 14px; }
+.decide-hint { font-size: 14px; color: var(--ink-3); }
+.choices { display: flex; flex-wrap: wrap; gap: 8px; }
+.choices button { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 8px 16px; cursor: pointer; font-weight: 500; font-size: 15px; min-height: 40px; }
+.choices button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.field { display: grid; gap: 6px; }
+.field label { font-size: 14px; color: var(--ink-2); }
+textarea { width: 100%; min-height: 80px; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--surface); resize: vertical; font-size: 16px; }
+.recorded { font-size: 14.5px; color: var(--green); font-weight: 500; }
+
+/* Details */
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+details + details { margin-top: 10px; }
+summary { cursor: pointer; padding: 14px 18px; font-weight: 500; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; color: var(--ink-3); font-weight: 400; }
+details[open] summary::after { content: "−"; }
+.d-body { padding: 0 18px 18px; display: grid; gap: 14px; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: start; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--ink-3); font-weight: 500; font-size: 13px; white-space: nowrap; }
+td.r, th.r { text-align: end; }
+.src { color: var(--ink-3); font-size: 13px; }
+.formula { font-size: 14px; color: var(--ink-2); max-width: 70ch; }
+
+/* How it works */
+.how { display: grid; gap: 28px; }
+.how h1 { font-size: 26px; font-weight: 600; }
+.lede { color: var(--ink-2); max-width: 62ch; margin-top: 6px; }
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; counter-reset: s; }
+ol.steps li { counter-increment: s; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 4px 12px; }
+ol.steps li::before { content: counter(s); grid-row: span 2; width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-weight: 600; font-size: 14px; }
+ol.steps b { font-weight: 600; }
+ol.steps span { color: var(--ink-2); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+.box h2 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+.box ul { margin: 0; padding-inline-start: 18px; display: grid; gap: 6px; color: var(--ink-2); }
+
+/* Intro, tour, ending */
+.intro { min-height: 62vh; display: grid; align-content: center; gap: 22px; padding-block: 40px; }
+.intro .kicker { color: var(--accent); font-weight: 600; font-size: 15px; }
+.intro h1 { font-size: clamp(26px, 4.4vw, 40px); font-weight: 600; max-width: 22ch; line-height: 1.25; }
+.intro p { color: var(--ink-2); font-size: 18px; max-width: 52ch; }
+.intro .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.btn-lg { padding: 12px 22px; font-size: 17px; min-height: 48px; border-radius: 10px; }
+.linkbtn { background: none; border: 0; color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; font-size: 15px; padding: 8px 4px; }
+.end-list { display: grid; gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; max-width: 620px; }
+.end-list div { display: flex; justify-content: space-between; gap: 16px; padding: 14px 18px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.end-list div:first-child { border-top: 0; }
+.end-list span { color: var(--ink-2); }
+.end-list b { font-weight: 600; }
+body.touring #view-check > * { opacity: .28; transition: opacity .25s ease; pointer-events: none; }
+body.touring #view-check .spot-wrap { opacity: 1; }
+body.touring .spot { opacity: 1 !important; outline: 3px solid var(--accent); outline-offset: 6px; border-radius: 12px; position: relative; z-index: 1; }
+body.touring .spot-wrap > *:not(.spot):not(.spot-wrap):not(.sec-h) { opacity: .28; }
+body.touring main#view-check { padding-bottom: 260px; }
+.guide { position: fixed; z-index: 20; inset-inline: 0; bottom: 0; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); pointer-events: none; }
+.guide-card { pointer-events: auto; max-width: 620px; margin: 0 auto; background: var(--ink); color: var(--bg); border-radius: 14px; padding: 18px 20px; display: grid; gap: 14px; box-shadow: 0 10px 30px rgba(10, 20, 30, .25); }
+.guide-step { font-size: 13.5px; opacity: .75; }
+.guide-text { font-size: 17px; line-height: 1.5; }
+.guide-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.guide-row .btn { background: transparent; color: var(--bg); border-color: color-mix(in srgb, var(--bg) 35%, transparent); }
+.guide-row .btn-primary { background: var(--bg); color: var(--ink); border-color: var(--bg); }
+.dots { display: flex; gap: 6px; }
+.dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--bg); opacity: .3; }
+.dots i.on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { body.touring #view-check > * { transition: none; } }
+
+/* AI panel */
+.ai-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; display: grid; gap: 14px; margin-bottom: 14px; }
+.ai-panel textarea { font-size: 15px; line-height: 1.5; }
+.ai-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.ai-status { font-size: 14px; color: var(--ink-2); }
+.ai-status:empty { display: none; }
+.ai-warn { background: var(--amber-soft); color: var(--ink); padding: 8px 12px; border-radius: 8px; font-size: 14px; }
+.ai-out { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
+.ai-row { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; font-size: 15px; }
+.ai-row > span:first-child { color: var(--ink-3); font-size: 14px; }
+.ai-conf { color: var(--ink-3); font-size: 13px; }
+.timed { font-size: 13.5px; color: var(--ink-3); margin-top: -16px; }
+.section-label { font-weight: 600; font-size: 15px; }
+@media (max-width: 680px) { .ai-row { grid-template-columns: 1fr; gap: 2px; } }
+
+/* Blue "shared, within limit" answer */
+.answer.blue { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+.answer.blue .tag { color: var(--accent); }
+
+/* Application form */
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
+.form-grid .wide { grid-column: 1 / -1; }
+.form-grid .field input, .form-grid .field select { width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; background: var(--surface); font-size: 16px; }
+.form-sub { font-size: 15px; font-weight: 600; margin-top: 6px; }
+.form-hint { font-size: 13.5px; color: var(--ink-3); }
+.app-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+
+/* Source links and documents */
+.doclink { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; font-size: 13px; text-align: start; }
+dialog.doc { border: 1px solid var(--line); border-radius: 14px; padding: 0; width: min(760px, calc(100vw - 32px)); max-height: calc(100vh - 48px); background: var(--surface); color: var(--ink); }
+dialog.doc::backdrop { background: rgba(10, 18, 28, .45); }
+.doc-h { position: sticky; top: 0; background: var(--surface); border-bottom: 1px solid var(--line); padding: 14px 18px; display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.doc-h small { display: block; color: var(--amber); font-size: 13px; font-weight: 500; }
+.doc-b { padding: 18px; display: grid; gap: 22px; }
+.doc-b h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+.doc-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 18px; margin: 0; }
+.doc-facts dt { font-size: 13px; color: var(--ink-3); }
+.doc-facts dd { margin: 0; font-weight: 500; }
+tr.hl td { background: var(--amber-soft); }
+.clause { border-inline-start: 3px solid var(--line); padding: 8px 12px; background: var(--bg); border-radius: 4px; }
+.clause.hl { border-color: var(--amber); background: var(--amber-soft); }
+
+@media (max-width: 680px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .f-body, .two { grid-template-columns: 1fr; }
+  .app h1, .how h1 { font-size: 22px; }
+  .answer h2 { font-size: 19px; }
+  nav.views { order: 3; width: 100%; }
+}
+
+.q { display: grid; gap: 16px; max-width: 640px; margin: 48px auto 64px; }
+.q h1 { font-size: 26px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; }
+.q textarea { min-height: 150px; font-size: 15.5px; line-height: 1.55; }
+.q-actions { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.q-ans { display: grid; gap: 12px; }
+.q-ans:empty { display: none; }
+.q-body { display: grid; gap: 20px; }
+.q-read { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.q-read span { color: var(--ink-2); }
+.q-read b { font-weight: 500; text-align: end; }
+.q-graph { display: grid; gap: 16px; }
+.q-links { display: flex; gap: 20px; font-size: 14.5px; }
+.q-links a { color: var(--ink-2); text-underline-offset: 3px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (max-width: 600px) { .q { margin-top: 28px; } .q h1 { font-size: 21px; } }
+.q-seg { margin-top: 8px; }
+.q-links-list { display: grid; gap: 0; margin-top: 8px; }
+.q-link { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.q-link div { display: grid; gap: 2px; min-width: 0; }
+.q-link b { font-weight: 500; }
+.q-link small { color: var(--ink-2); font-size: 13.5px; }
+.q-link.off b { color: var(--ink-3); text-decoration: line-through; }
+.q-link .btn { flex: none; font-size: 14px; }
+.q-conc { display: grid; gap: 6px; margin-top: 12px; }
+.q-conc small { color: var(--ink-2); font-weight: 400; }
+.q-conc .fill { background: var(--ink-2); }
+.q-link small .doclink { font-size: 13.5px; }
+.q-choices { margin-top: 8px; }
+</style>
+
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#">
+      <svg width="26" height="26" viewBox="0 0 28 28" aria-hidden="true">
+        <g stroke="currentColor" stroke-width="1.6"><line x1="6" y1="7" x2="14" y2="14"/><line x1="22" y1="7" x2="14" y2="14"/><line x1="14" y1="23" x2="14" y2="14"/></g>
+        <g fill="var(--surface)" stroke="currentColor" stroke-width="1.6"><circle cx="6" cy="7" r="3"/><circle cx="22" cy="7" r="3"/><circle cx="14" cy="23" r="3"/></g>
+        <circle cx="14" cy="14" r="4.5" fill="var(--accent)"/>
+      </svg>
+      <span data-i="appName"></span>
+    </a>
+    <div class="tools">
+      <button class="btn" id="langBtn" type="button"></button>
+      <button class="btn" id="themeBtn" type="button"></button>
+    </div>
+  </div>
+</header>
+
+
+<main class="wrap" id="view-simple" hidden></main>
+<main class="wrap" id="view-demo" hidden></main>
+<main class="wrap" id="view-check" hidden></main>
+<div class="guide" id="guide" hidden></div>
+<dialog class="doc" id="docDlg" aria-label="Document"></dialog>
+<main class="wrap" id="view-how" hidden></main>
+
+<script>
+/* Uqdah in-browser extraction. Model: multilingual-e5-small (int8 ONNX), served as same-origin chunks. */
+window.UqdahAI = (function () {
+  "use strict";
+  const BASE = "./ai/";
+  const CHUNKS = {
+    wasm: { n: 2, size: 21596019 },
+    "multilingual-e5-small/tokenizer.json": { n: 2, size: 17082730 },
+    "multilingual-e5-small/onnx/model_quantized.onnx": { n: 9, size: 118308185 }
+  };
+  const TOTAL = Object.values(CHUNKS).reduce((s, c) => s + c.size, 0);
+  let loaded = 0, onProgress = () => {}, extractor = null, loading = null;
+
+  async function fetchChunks(path, n) {
+    const parts = [];
+    for (let i = 0; i < n; i++) {
+      const res = await fetch(`${BASE}${path}.${i}.wasm`);
+      if (!res.ok) throw new Error(`Could not load ${path} part ${i} (${res.status})`);
+      const reader = res.body.getReader(); const bufs = [];
+      for (;;) { const { done, value } = await reader.read(); if (done) break; bufs.push(value); loaded += value.length; onProgress(loaded / TOTAL); }
+      parts.push(new Blob(bufs));
+    }
+    return new Blob(parts);
+  }
+
+  function load(progress) {
+    if (extractor) return Promise.resolve(extractor);
+    if (loading) return loading;
+    onProgress = progress || (() => {});
+    loading = (async () => {
+      const tf = await import(new URL(BASE + "transformers.min.js", location.href).href);
+      const env = tf.env;
+      env.allowRemoteModels = false;
+      env.allowLocalModels = true;
+      env.localModelPath = new URL(BASE + "models/", location.href).href;
+      env.useBrowserCache = false;
+      env.useCustomCache = true;
+      env.customCache = {
+        async match(key) {
+          const k = String(key && key.url ? key.url : key);
+          for (const p in CHUNKS) {
+            if (p !== "wasm" && k.endsWith(p)) { const b = await fetchChunks("models/" + p, CHUNKS[p].n); return new Response(b); }
+          }
+          return undefined;
+        },
+        async put() {}
+      };
+      const wasm = await fetchChunks("ort.wasm", CHUNKS.wasm.n);
+      const o = env.backends.onnx.wasm;
+      o.wasmBinary = await wasm.arrayBuffer();
+      o.wasmPaths = { mjs: new URL(BASE + "ort-wasm-simd-threaded.jsep.mjs", location.href).href, wasm: new URL(BASE + "ort.wasm.0.wasm", location.href).href };
+      o.numThreads = 1;
+      o.proxy = false;
+      extractor = await tf.pipeline("feature-extraction", "multilingual-e5-small", { dtype: "q8", device: "wasm" });
+      onProgress(1);
+      return extractor;
+    })();
+    loading.catch(() => { loading = null; });
+    return loading;
+  }
+
+  async function embed(texts, prefix) {
+    const out = await extractor(texts.map(t => (prefix || "query: ") + t), { pooling: "mean", normalize: true });
+    return out.tolist();
+  }
+  const dot = (a, b) => { let s = 0; for (let i = 0; i < a.length; i++) s += a[i] * b[i]; return s; };
+
+  const PROTOS = {
+    power: ["temporary power supplier and generators", "electricity generator rental company", "power will be supplied by", "مورد الطاقة المؤقتة والمولدات الكهربائية", "شركة تأجير المولدات وتوفير الكهرباء", "توفير الطاقة الكهربائية للفعالية"],
+    stage: ["stage, sound and lighting supplier", "audio visual and stage production company", "sound system and stage provided by", "مورد المسرح والصوتيات والإضاءة", "شركة الصوتيات والإنتاج المسرحي", "تجهيز المسرح والصوت"],
+    venue: ["the event venue, hall or exhibition centre", "the event will be held at this location", "مكان إقامة الفعالية أو القاعة أو مركز المعارض", "تقام الفعالية في هذا الموقع"],
+    other: ["insurance application for an event", "طلب تأمين لفعالية", "catering and food services", "security guards and crowd management", "ticketing and registration", "insurance cancellation limit and deductible amount", "event name and dates", "number of expected visitors", "خدمات الإعاشة والضيافة", "الأمن وإدارة الحشود", "حد التعويض والتحمل", "اسم الفعالية وتاريخها", "عدد الزوار المتوقع"]
+  };
+  let protoVecs = null;
+
+  /* Rules for things that need no model: dates, amounts, registration numbers. */
+  const MONTHS = { jan: 1, january: 1, feb: 2, february: 2, mar: 3, march: 3, apr: 4, april: 4, may: 5, jun: 6, june: 6, jul: 7, july: 7, aug: 8, august: 8, sep: 9, sept: 9, september: 9, oct: 10, october: 10, nov: 11, november: 11, dec: 12, december: 12,
+    "يناير": 1, "فبراير": 2, "مارس": 3, "أبريل": 4, "ابريل": 4, "مايو": 5, "يونيو": 6, "يوليو": 7, "أغسطس": 8, "اغسطس": 8, "سبتمبر": 9, "أكتوبر": 10, "اكتوبر": 10, "نوفمبر": 11, "ديسمبر": 12 };
+  const toLatin = s => s.replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d));
+  const iso = (y, m, d) => `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  function findDates(text) {
+    const s = toLatin(text), out = [];
+    let m;
+    const r1 = /(\d{4})-(\d{1,2})-(\d{1,2})/g; while ((m = r1.exec(s))) out.push({ i: m.index, v: iso(m[1], m[2], m[3]) });
+    const r2 = /(\d{1,2})\s*(?:(?:-|–|to|إلى|الى|حتى|و)\s*(\d{1,2})\s+)?([A-Za-z؀-ۿ]+)\s+(\d{4})/g;
+    while ((m = r2.exec(s))) { const mo = MONTHS[m[3].toLowerCase()]; if (mo) { out.push({ i: m.index, v: iso(m[4], mo, m[1]) }); if (m[2]) out.push({ i: m.index + 1, v: iso(m[4], mo, m[2]) }); } }
+    const r3 = /([A-Za-z]+)\s+(\d{1,2})(?:\s*(?:-|–|to)\s*(\d{1,2}))?,?\s+(\d{4})/g;
+    while ((m = r3.exec(s))) { const mo = MONTHS[m[1].toLowerCase()]; if (mo) { out.push({ i: m.index, v: iso(m[4], mo, m[2]) }); if (m[3]) out.push({ i: m.index + 1, v: iso(m[4], mo, m[3]) }); } }
+    return out.sort((a, b) => a.i - b.i).map(x => x.v);
+  }
+  function findAmount(text, words) {
+    const s = toLatin(text);
+    for (const line of s.split(/\n|[.;؛]/)) {
+      if (!words.test(line)) continue;
+      const m = line.match(/(\d[\d,\s]*(?:\.\d+)?)\s*(million|m\b|مليون)?/i);
+      if (m) { let v = parseFloat(m[1].replace(/[,\s]/g, "")); if (m[2]) v *= 1e6; if (v > 0) return Math.round(v); }
+    }
+    return null;
+  }
+  const findCr = seg => { const m = toLatin(seg).match(/\b(\d{10})\b/); return m ? m[1] : ""; };
+
+  function segments(text) {
+    return text.split(/\n+/).flatMap(l => l.split(/(?<=[.؛;])\s+/)).map(s => s.trim()).filter(s => s.length > 3);
+  }
+  function cleanName(seg, role) {
+    let s = seg;
+    const colon = s.lastIndexOf(":"); if (colon >= 0 && colon < s.length - 2) s = s.slice(colon + 1);
+    const pats = [/\b(?:by|from|with)\s+(.+)/i, /\b(?:held at|takes place at|at)\s+(.+)/i, /(?:بواسطة|من قبل|عن طريق|تقدمه|يقدمها|يوفرها|توفرها)\s+(.+)/, /(?:تقام في|تُقام في|في)\s+(.+)/];
+    for (const p of pats) { const m = s.match(p); if (m && m[1].length > 2) { s = m[1]; break; } }
+    s = s.replace(/\(.*?\)/g, " ")
+      .replace(/\b(?:CR|C\.R\.|registration|reg\.?\s*no\.?)\b.*$/i, " ")
+      .replace(/(?:سجل تجاري|رقم السجل|س\.ت).*$/, " ")
+      .replace(/\d{6,}/g, " ")
+      .split(/,|،| on | from \d| between |\s-\s|\bon\b|\bduring\b|خلال|بتاريخ|من يوم/)[0]
+      .replace(/^(?:the|a)\s+/i, "")
+      .replace(/[.;؛]+$/, "").replace(/\s+/g, " ").trim();
+    return s;
+  }
+
+  async function extract(text) {
+    if (!extractor) throw new Error("model not loaded");
+    const t0 = performance.now();
+    if (!protoVecs) {
+      protoVecs = {};
+      for (const k in PROTOS) protoVecs[k] = await embed(PROTOS[k], "query: ");
+    }
+    const segs = segments(text);
+    const vecs = segs.length ? await embed(segs, "query: ") : [];
+    const found = {}, scored = [];
+    segs.forEach((seg, i) => {
+      const sc = {};
+      for (const k in protoVecs) sc[k] = Math.max(...protoVecs[k].map(p => dot(p, vecs[i])));
+      const ranked = Object.entries(sc).sort((a, b) => b[1] - a[1]);
+      const [role, best] = ranked[0], margin = best - ranked[1][1];
+      scored.push({ seg, role, score: best, margin });
+      const ruleOnly = /\d{4}|SAR|ريال|deductible|limit|التحمل|حد التعويض/i.test(seg) && !findCr(seg);
+      if (!ruleOnly && role !== "other" && margin > 0.01 && (!found[role] || best > found[role].score)) {
+        const name = cleanName(seg, role);
+        if (name) found[role] = { name, cr: findCr(seg), score: best, seg };
+      }
+    });
+    const dates = findDates(text);
+    const lines = text.split(/\n/).map(s => s.trim()).filter(Boolean);
+    let name = "";
+    const nm = text.match(/^\s*(?:application|insurance application|event name|event|طلب تأمين|طلب|اسم الفعالية)\s*[:：]\s*(.+)$/im);
+    if (nm) name = nm[1].split(/,|،/)[0].trim(); else if (lines[0] && lines[0].length < 80) name = lines[0];
+    const res = {
+      name,
+      start: dates[0] || "", end: dates[1] || dates[0] || "",
+      limit: findAmount(text, /limit|cover|sum insured|حد|تغطية|مبلغ التأمين/i),
+      ded: findAmount(text, /deductible|excess|تحمل|التحمّل|التحمل/i),
+      venue: found.venue || null, power: found.power || null, stage: found.stage || null,
+      segments: scored, ms: Math.round(performance.now() - t0)
+    };
+    return res;
+  }
+
+  async function similar(a, list) {
+    const v = await embed([a].concat(list), "query: ");
+    return list.map((x, i) => dot(v[0], v[i + 1]));
+  }
+
+  return { load, extract, similar, isLoaded: () => !!extractor, totalBytes: TOTAL, findDates };
+})();
+
+</script>
+<script>
+(function () {
+"use strict";
+
+/* ================= Text ================= */
+const T = {
+  en: {
+    appName: "Uqdah", navDemo: "Demo", navCheck: "Try it yourself", navHow: "How it works",
+    notice: "Prototype with made-up test data. No real companies, events or policies.",
+    lang: "العربية", dark: "Dark mode", light: "Light mode",
+    introKicker: "Uqdah, for event insurers",
+    introH: "Several insured events can depend on the same supplier on the same days.",
+    introP: "Each application is reviewed on its own, so this shared risk is easy to miss. This demo shows how Uqdah finds it in under a minute.",
+    start: "Start demo", skip: "Skip to the tool",
+    stepOf: (i, n) => `Step ${i} of ${n}`, next: "Next", back: "Back", finish: "See the result",
+    tour: [
+      (x) => `A new event asks for cancellation cover. On its own, it looks like a normal application.`,
+      (x) => `Uqdah compares it with all ${x.total} insured events. ${x.n} of them need the same power supplier, ${x.s}, on the same days.`,
+      (x) => `If that supplier fails, the possible payout goes from ${x.before} to ${x.after}. That is above the limit of ${x.limit} for one supplier.`,
+      (x) => `Uqdah does not decide. The underwriter does, for example by accepting only if the event has a backup power supplier.`
+    ],
+    endKicker: "Result",
+    endH: "Uqdah found a shared risk that was not visible in the application itself.",
+    endShared: "Shared supplier", endEvents: "Insured events on the same days", endPayout: "Possible payout if it fails", endLimit: "Limit for one supplier",
+    endFromTo: (a, b) => `from ${a} to ${b}`,
+    explore: "Try it yourself", replay: "Replay demo",
+    sample: "Pick a sample or enter your own:", own: "Enter your own",
+    appLabel: "New application to insure", edit: "Edit this application",
+    when: "Event dates", where: "Venue", cover: "Cancellation cover", type: "Event type",
+    reliesOn: "Relies on",
+    aiTitle: "Fill the form from application text",
+    aiHint: "Paste the application or supplier list. A small AI model reads it inside your browser, finds the venue and suppliers, and fills the form. Check every field before you rely on it.",
+    aiExEn: "English example", aiExAr: "Arabic example", aiLabel: "Application text",
+    aiRun: "Read with AI", aiRunFirst: (mb) => `Load the AI model (${mb} MB, first time only) and read`,
+    aiLoading: (p) => `Loading the AI model in your browser: ${p}%`, aiReading: "Reading the text…",
+    aiFound: "What the model found", aiConf: "match to role", aiNone: "Not found",
+    aiTook: (s) => `Read in ${s} seconds, on this device. Nothing was sent to a server.`,
+    aiFail: "The AI model could not load in this browser. You can still fill the form by hand.",
+    aiFallback: "The model could not load here, so these are results saved from an earlier run of the same model on this example text.",
+    aiModel: "Model: multilingual-e5-small (open source, MIT licence), running locally.",
+    q_match_ai: (s) => `The AI model rates these names as similar (${s}), but there is no registration number to prove it.`,
+    timed: (n, l, ms) => `Checked against ${n} insured events and ${l} supplier lines in ${ms} ms, measured in this browser.`,
+    endTime: "Time to check, measured now",
+    formTitle: "Enter an application", formHint: "Results below update as you type. Each supplier is assumed to be needed from one day before the event.",
+    fName: "Event name", fType: "Event type", fStart: "First day", fEnd: "Last day", fLimit: "Cancellation limit (SAR)", fDed: "Deductible (SAR)", fCover: "Does the policy cover supplier failure?",
+    fVenue: "Venue name", fPower: "Temporary power supplier", fStage: "Stage and sound supplier", fCr: "Registration no. (optional)",
+    fSuppliers: "Who the event depends on", fSuppliersHint: "Type a name as it appears in the application. Leave a field empty if it does not apply.",
+    v_red_tag: "Review before accepting",
+    v_red_h: (s, n) => `This event needs ${s} on the same days as ${n} events you already insure.`,
+    v_red_p: "If it fails, the possible payout would go above your limit for one supplier.",
+    v_amber_tag: "Check before accepting",
+    v_amber_h: (s, n) => `This event needs ${s} on the same days as ${n} events you already insure.`,
+    v_amber_p: "Your limit for one supplier could be exceeded, depending on items that still need checking below.",
+    v_pend_h: "Some names could match suppliers in your portfolio.",
+    v_pend_p: "Confirm or reject the matches below to see the full result.",
+    v_blue_tag: "Shared, within your limit",
+    v_blue_h: (s, n) => `This event needs ${s} on the same days as ${n} events you already insure.`,
+    v_blue_p: "The possible payout stays within your limit for one supplier.",
+    v_green_tag: "No shared risk found",
+    v_green_h: "This event does not share a critical supplier or venue with your insured events on the same days.",
+    v_green_p: "You can review it on its own as usual.",
+    whyTitle: "Why",
+    usedBy: (n) => n === 1 ? "Also needed by 1 insured event on the same days:" : `Also needed by ${n} insured events on the same days:`,
+    usedNone: "None of your insured events need it on the same days.",
+    payoutQ: (s) => `If ${s} fails on these days, how much could you pay?`,
+    today: "Today", withThis: "If you accept", limitLbl: "Your limit for one supplier",
+    otherDates: (n) => `Also used by ${n} insured ${n === 1 ? "event" : "events"} on other dates. Not counted.`,
+    unclear: (e) => `${e} is not counted yet: its policy wording on supplier failure is unclear.`,
+    excluded: (e) => `${e} is not counted: its policy excludes supplier failure.`,
+    alt: (e) => `${e} is not counted: it has a confirmed backup supplier.`,
+    newEvent: "New",
+    checksTitle: "Check before deciding",
+    q_match: (raw, ent) => `Is “${raw}” the same as ${ent} in your portfolio?`,
+    q_match_s: "The names look alike but there is no registration number to prove it.",
+    q_match_x: "Same name, but no registration number to prove it is the same company.",
+    same: "Same", different: "Different",
+    q_confirmed: (raw, ent) => `“${raw}” confirmed as ${ent}.`,
+    q_rejected: (raw) => `“${raw}” treated as a different company.`,
+    undo: "Undo",
+    q_unclear: (e) => `Read the supplier failure wording for ${e}.`,
+    q_unclear_s: "If it is covered, the payout above goes up.",
+    q_new: (n) => `${n} is new to your portfolio. Nothing to compare.`,
+    q_none: "Nothing else to check.",
+    decideTitle: "Your decision", decideHint: "Uqdah only shows what it found. You decide.",
+    d_accept: "Accept", d_cond: "Accept with conditions", d_ri: "Refer to reinsurance", d_info: "Ask for more information", d_decline: "Decline",
+    reason: "Reason or conditions (optional)", reasonPh: "For example: require a backup power supplier",
+    save: "Save decision", saved: (d) => `Saved: ${d}.`,
+    detTitle: "Show the calculation and sources",
+    portTitle: (n) => `Show all ${n} insured events in this test portfolio`,
+    portHint: "Select an event to open its test documents.",
+    thEvent: "Event", thDates: "Dates", thVenue: "Venue", thCover: "Supplier failure", thLimit: "Limit", thDed: "Deductible", thCount: "Counted", thSrc: "Source",
+    c_covered: "Covered", c_excluded: "Excluded", c_unknown: "Unclear",
+    formula: "Counted amount = cancellation limit minus deductible, only when the policy covers supplier failure. It assumes full cancellation. It is a scenario figure, not an expected loss or a saving.",
+    srcLine: (n) => `Supplier schedule, line ${n}`, srcWording: "Policy wording", srcApp: (n) => `Application, line ${n}`,
+    docTest: "Synthetic test document", close: "Close",
+    docSchedule: "Supplier schedule", docWording: "Policy schedule and wording", docApp: "Application form",
+    dPolicy: "Policy no.", dEvent: "Insured event", dDates: "Event dates", dVenue: "Venue",
+    dLine: "Line", dRole: "Role", dName: "Name as written", dCr: "Registration no.", dNeeded: "Needed", dBackup: "Backup confirmed",
+    dLimit: "Cancellation limit", dDed: "Deductible", dClause: "Supplier failure",
+    yes: "Yes", no: "No",
+    clauses: {
+      covered: "Clause 2.1: Cover extends to cancellation caused by the failure of a supplier or venue named in the supplier schedule.",
+      excluded: "Exclusion 5(c): This policy does not cover cancellation caused by the failure of any contractor or supplier.",
+      unknownA: "Clause 2.1 refers to Endorsement E-1 for named suppliers. Endorsement E-1 is referenced but was not attached to the file.",
+      unknownB: "The schedule lists supplier failure as covered, but Endorsement E-3 limits it to “approved suppliers” without listing them."
+    },
+    howTitle: "How it works",
+    howLede: "Event policies are usually reviewed one at a time. Uqdah looks at them together, so you can see when several events depend on the same supplier or venue on the same days.",
+    steps: [
+      ["Collect what each event depends on", "Power, stage and sound, venue, and the dates each one is needed. An AI model running in the browser can read these from the application text."],
+      ["Match the same company", "Names are written differently. A registration number confirms a match. A name match waits for you to confirm it."],
+      ["Find overlaps in time", "The same supplier in two different months is not a shared risk. Only the same days count."],
+      ["Show the possible payout", "Using each policy's limit, deductible and wording, with the source document for every number."],
+      ["You decide", "Uqdah does not accept, price or decide coverage."]
+    ],
+    showsTitle: "What this prototype shows",
+    shows: ["The matching and calculation work on the test data.", "An open-source AI model reads Arabic and English application text in the browser, without an API key or server.", "A new event that looks independent can share a supplier with insured events.", "Every number can be traced to a line in a test document."],
+    notTitle: "What it does not show yet",
+    nots: ["That this problem exists at Saudi insurers today.", "Savings or avoided losses.", "Accuracy on real applications and real policy wording."],
+    dataTitle: "About the test data",
+    dataText: (n) => `${n} made-up insured events from February to April 2027, with their supplier schedules and policy wording, plus 4 sample applications. The data has three hidden bottlenecks: one power supplier, one stage and sound company used by 6 events in one week, and one exhibition centre hosting events back to back. The limit of SAR 10 million per supplier is an example from the research study, not a company figure. One risk is modelled: a critical supplier or venue fails and the event is cancelled.`,
+    types: { conference: "Conference", festival: "Festival", exhibition: "Exhibition", concert: "Concert", sports: "Sports event" },
+    roles: { power: "Temporary power", stage: "Stage and sound", venue: "Venue" }
+  },
+  ar: {
+    appName: "عُقدة", navDemo: "العرض", navCheck: "جرّبها بنفسك", navHow: "كيف تعمل",
+    notice: "نموذج أولي ببيانات اختبار مُختلَقة. لا توجد شركات أو فعاليات أو وثائق حقيقية.",
+    lang: "English", dark: "الوضع الداكن", light: "الوضع الفاتح",
+    introKicker: "عُقدة، لشركات تأمين الفعاليات",
+    introH: "قد تعتمد عدة فعاليات مؤمَّنة على المورّد نفسه في الأيام نفسها.",
+    introP: "يُراجَع كل طلب منفردًا، لذلك يسهل أن يفوت هذا الخطر المشترك. يوضح هذا العرض كيف تكتشفه «عُقدة» في أقل من دقيقة.",
+    start: "ابدأ العرض", skip: "انتقل إلى الأداة مباشرة",
+    stepOf: (i, n) => `الخطوة ${i} من ${n}`, next: "التالي", back: "السابق", finish: "اعرض النتيجة",
+    tour: [
+      (x) => `فعالية جديدة تطلب تغطية الإلغاء. إذا نظرت إليها وحدها، تبدو طلبًا عاديًا.`,
+      (x) => `تقارنها «عُقدة» بجميع الفعاليات المؤمَّنة وعددها ${x.total}. ${x.n} منها تحتاج مورّد الطاقة نفسه، ${x.s}، في الأيام نفسها.`,
+      (x) => `إذا تعطّل هذا المورّد، يرتفع التعويض المحتمل من ${x.before} إلى ${x.after}، وهذا أعلى من حد ${x.limit} للمورّد الواحد.`,
+      (x) => `لا تقرر «عُقدة». المكتتب هو من يقرر، مثلًا بالقبول بشرط وجود مورّد طاقة احتياطي.`
+    ],
+    endKicker: "النتيجة",
+    endH: "اكتشفت «عُقدة» خطرًا مشتركًا لم يكن ظاهرًا في الطلب نفسه.",
+    endShared: "المورّد المشترك", endEvents: "فعاليات مؤمَّنة في الأيام نفسها", endPayout: "التعويض المحتمل إذا تعطّل", endLimit: "الحد للمورّد الواحد",
+    endFromTo: (a, b) => `من ${a} إلى ${b}`,
+    explore: "جرّبها بنفسك", replay: "أعد العرض",
+    sample: "اختر طلبًا تجريبيًا أو أدخل طلبك:", own: "أدخل طلبك",
+    appLabel: "طلب تأمين جديد", edit: "عدّل هذا الطلب",
+    when: "تواريخ الفعالية", where: "الموقع", cover: "تغطية الإلغاء", type: "نوع الفعالية",
+    reliesOn: "تعتمد على",
+    aiTitle: "املأ النموذج من نص الطلب",
+    aiHint: "الصق نص الطلب أو قائمة الموردين. يقرأه نموذج ذكاء اصطناعي صغير داخل متصفحك، ويستخرج الموقع والموردين، ثم يملأ النموذج. راجع كل حقل قبل الاعتماد عليه.",
+    aiExEn: "مثال بالإنجليزية", aiExAr: "مثال بالعربية", aiLabel: "نص الطلب",
+    aiRun: "اقرأ بالذكاء الاصطناعي", aiRunFirst: (mb) => `حمّل النموذج (${mb} ميغابايت، أول مرة فقط) واقرأ`,
+    aiLoading: (p) => `يتم تحميل النموذج في متصفحك: ${p}%`, aiReading: "تتم قراءة النص…",
+    aiFound: "ما وجده النموذج", aiConf: "مطابقة للدور", aiNone: "لم يُعثر عليه",
+    aiTook: (s) => `تمت القراءة في ${s} ثانية على هذا الجهاز. لم يُرسل أي شيء إلى خادم.`,
+    aiFail: "تعذّر تحميل النموذج في هذا المتصفح. يمكنك تعبئة النموذج يدويًا.",
+    aiFallback: "تعذّر تحميل النموذج هنا، لذلك هذه نتائج محفوظة من تشغيل سابق للنموذج نفسه على هذا المثال.",
+    aiModel: "النموذج: multilingual-e5-small (مفتوح المصدر، رخصة MIT)، يعمل محليًا.",
+    q_match_ai: (s) => `يرى نموذج الذكاء الاصطناعي أن الاسمين متشابهان (${s})، لكن لا يوجد رقم سجل تجاري يثبت ذلك.`,
+    timed: (n, l, ms) => `تم الفحص مقابل ${n} فعالية مؤمَّنة و${l} سطرًا من جداول الموردين في ${ms} ملّي ثانية، مقاسة في هذا المتصفح.`,
+    endTime: "زمن الفحص، مقاس الآن",
+    formTitle: "أدخل طلبًا", formHint: "تتحدث النتائج أدناه أثناء الكتابة. يُفترض أن كل مورّد مطلوب من اليوم السابق للفعالية.",
+    fName: "اسم الفعالية", fType: "نوع الفعالية", fStart: "اليوم الأول", fEnd: "اليوم الأخير", fLimit: "حد تعويض الإلغاء (ريال)", fDed: "التحمّل (ريال)", fCover: "هل تغطي الوثيقة تعطّل المورّد؟",
+    fVenue: "اسم الموقع", fPower: "مورّد الطاقة المؤقتة", fStage: "مورّد المسرح والصوتيات", fCr: "رقم السجل التجاري (اختياري)",
+    fSuppliers: "الجهات التي تعتمد عليها الفعالية", fSuppliersHint: "اكتب الاسم كما ورد في الطلب. اترك الحقل فارغًا إذا لم ينطبق.",
+    v_red_tag: "راجِع قبل القبول",
+    v_red_h: (s, n) => `تحتاج هذه الفعالية ${s} في الأيام نفسها التي تحتاجه فيها ${n} فعاليات تؤمّن عليها حاليًا.`,
+    v_red_p: "إذا تعطّل، فإن التعويض المحتمل سيتجاوز حدّك للمورّد الواحد.",
+    v_amber_tag: "تحقّق قبل القبول",
+    v_amber_h: (s, n) => `تحتاج هذه الفعالية ${s} في الأيام نفسها التي تحتاجه فيها ${n} فعاليات تؤمّن عليها حاليًا.`,
+    v_amber_p: "قد يتجاوز حدّك للمورّد الواحد، بحسب البنود التي ما زالت تحتاج تحققًا أدناه.",
+    v_pend_h: "بعض الأسماء قد تطابق موردين في محفظتك.",
+    v_pend_p: "أكّد المطابقات أدناه أو ارفضها لترى النتيجة كاملة.",
+    v_blue_tag: "مشترك، ضمن حدّك",
+    v_blue_h: (s, n) => `تحتاج هذه الفعالية ${s} في الأيام نفسها التي تحتاجه فيها ${n} فعاليات تؤمّن عليها حاليًا.`,
+    v_blue_p: "يبقى التعويض المحتمل ضمن حدّك للمورّد الواحد.",
+    v_green_tag: "لا يوجد خطر مشترك",
+    v_green_h: "لا تشترك هذه الفعالية في مورّد حرج أو موقع مع فعالياتك المؤمَّنة في الأيام نفسها.",
+    v_green_p: "يمكنك مراجعتها منفردة كالمعتاد.",
+    whyTitle: "السبب",
+    usedBy: (n) => n === 1 ? "تحتاجه أيضًا فعالية مؤمَّنة واحدة في الأيام نفسها:" : `تحتاجه أيضًا ${n} فعاليات مؤمَّنة في الأيام نفسها:`,
+    usedNone: "لا تحتاجه أي فعالية مؤمَّنة في الأيام نفسها.",
+    payoutQ: (s) => `إذا تعطّل ${s} في هذه الأيام، كم قد تدفع؟`,
+    today: "حاليًا", withThis: "إذا قبلت الطلب", limitLbl: "حدّك للمورّد الواحد",
+    otherDates: (n) => `يستخدمه أيضًا ${n} من الفعاليات المؤمَّنة في تواريخ أخرى. لا تُحتسب.`,
+    unclear: (e) => `${e} لا تُحتسب بعد: صياغة وثيقتها بشأن تعطّل المورّد غير واضحة.`,
+    excluded: (e) => `${e} لا تُحتسب: وثيقتها تستثني تعطّل المورّد.`,
+    alt: (e) => `${e} لا تُحتسب: لديها مورّد بديل مؤكد.`,
+    newEvent: "جديد",
+    checksTitle: "تحقّق قبل اتخاذ القرار",
+    q_match: (raw, ent) => `هل «${raw}» هي نفسها ${ent} الموجودة في محفظتك؟`,
+    q_match_s: "الاسمان متشابهان، لكن لا يوجد رقم سجل تجاري يثبت ذلك.",
+    q_match_x: "الاسم نفسه، لكن لا يوجد رقم سجل تجاري يثبت أنها الجهة نفسها.",
+    same: "نفسها", different: "مختلفة",
+    q_confirmed: (raw, ent) => `تم تأكيد «${raw}» على أنها ${ent}.`,
+    q_rejected: (raw) => `تُعامل «${raw}» كجهة مختلفة.`,
+    undo: "تراجع",
+    q_unclear: (e) => `اقرأ صياغة تعطّل المورّد في وثيقة ${e}.`,
+    q_unclear_s: "إذا كانت مغطاة، يرتفع مبلغ التعويض أعلاه.",
+    q_new: (n) => `${n} جديد على محفظتك. لا يوجد ما يُقارن به.`,
+    q_none: "لا يوجد شيء آخر للتحقق.",
+    decideTitle: "قرارك", decideHint: "تعرض «عُقدة» ما وجدته فقط. القرار لك.",
+    d_accept: "قبول", d_cond: "قبول بشروط", d_ri: "إحالة لإعادة التأمين", d_info: "طلب معلومات إضافية", d_decline: "اعتذار عن القبول",
+    reason: "السبب أو الشروط (اختياري)", reasonPh: "مثال: اشتراط مورّد طاقة احتياطي",
+    save: "حفظ القرار", saved: (d) => `تم الحفظ: ${d}.`,
+    detTitle: "عرض الحساب والمصادر",
+    portTitle: (n) => `عرض جميع الفعاليات المؤمَّنة في محفظة الاختبار (${n})`,
+    portHint: "اختر فعالية لفتح مستندات الاختبار الخاصة بها.",
+    thEvent: "الفعالية", thDates: "التواريخ", thVenue: "الموقع", thCover: "تعطّل المورّد", thLimit: "الحد", thDed: "التحمّل", thCount: "المحتسب", thSrc: "المصدر",
+    c_covered: "مغطى", c_excluded: "مستثنى", c_unknown: "غير واضح",
+    formula: "المبلغ المحتسب = حد الإلغاء ناقص التحمّل، فقط عندما تغطي الوثيقة تعطّل المورّد. يفترض إلغاءً كاملًا. هو رقم سيناريو، وليس خسارة متوقعة ولا وفرًا.",
+    srcLine: (n) => `جدول الموردين، السطر ${n}`, srcWording: "صياغة الوثيقة", srcApp: (n) => `الطلب، السطر ${n}`,
+    docTest: "مستند اختبار اصطناعي", close: "إغلاق",
+    docSchedule: "جدول الموردين", docWording: "جدول الوثيقة وصياغتها", docApp: "نموذج الطلب",
+    dPolicy: "رقم الوثيقة", dEvent: "الفعالية المؤمَّنة", dDates: "تواريخ الفعالية", dVenue: "الموقع",
+    dLine: "السطر", dRole: "الدور", dName: "الاسم كما ورد", dCr: "رقم السجل", dNeeded: "مطلوب", dBackup: "بديل مؤكد",
+    dLimit: "حد الإلغاء", dDed: "التحمّل", dClause: "تعطّل المورّد",
+    yes: "نعم", no: "لا",
+    clauses: {
+      covered: "البند 2.1: تمتد التغطية إلى الإلغاء الناتج عن تعطّل مورّد أو موقع مذكور في جدول الموردين.",
+      excluded: "الاستثناء 5(ج): لا تغطي هذه الوثيقة الإلغاء الناتج عن تعطّل أي مقاول أو مورّد.",
+      unknownA: "يحيل البند 2.1 إلى الملحق E-1 بخصوص الموردين المسمّين. الملحق مذكور لكنه غير مرفق بالملف.",
+      unknownB: "يذكر الجدول أن تعطّل المورّد مغطى، لكن الملحق E-3 يقصره على «الموردين المعتمدين» دون أن يسمّيهم."
+    },
+    howTitle: "كيف تعمل",
+    howLede: "تُراجَع وثائق الفعاليات عادةً واحدةً تلو الأخرى. تنظر «عُقدة» إليها معًا، لترى متى تعتمد عدة فعاليات على المورّد أو الموقع نفسه في الأيام نفسها.",
+    steps: [
+      ["جمع ما تعتمد عليه كل فعالية", "الطاقة، والمسرح والصوتيات، والموقع، والتواريخ التي يُحتاج فيها كل منها. يمكن لنموذج ذكاء اصطناعي يعمل في المتصفح قراءتها من نص الطلب."],
+      ["مطابقة الشركة نفسها", "تُكتب الأسماء بطرق مختلفة. رقم السجل التجاري يؤكد المطابقة، ومطابقة الاسم تنتظر تأكيدك."],
+      ["إيجاد التداخل الزمني", "المورّد نفسه في شهرين مختلفين ليس خطرًا مشتركًا. الأيام نفسها فقط هي ما يُحتسب."],
+      ["عرض التعويض المحتمل", "باستخدام حد كل وثيقة وتحمّلها وصياغتها، مع المستند المصدر لكل رقم."],
+      ["القرار لك", "لا تقبل «عُقدة» الوثيقة ولا تسعّرها ولا تقرر التغطية."]
+    ],
+    showsTitle: "ما يُظهره هذا النموذج",
+    shows: ["أن المطابقة والحساب يعملان على بيانات الاختبار.", "أن نموذج ذكاء اصطناعي مفتوح المصدر يقرأ نص الطلب بالعربية والإنجليزية داخل المتصفح، بدون مفتاح API أو خادم.", "أن فعالية جديدة تبدو مستقلة قد تشترك في مورّد مع فعاليات مؤمَّنة.", "أن كل رقم يمكن تتبعه إلى سطر في مستند اختبار."],
+    notTitle: "ما لا يُظهره بعد",
+    nots: ["أن هذه المشكلة موجودة لدى شركات التأمين السعودية اليوم.", "وفورات أو خسائر متجنَّبة.", "الدقة على طلبات وصياغات وثائق حقيقية."],
+    dataTitle: "عن بيانات الاختبار",
+    dataText: (n) => `${n} فعالية مؤمَّنة مُختلَقة من فبراير إلى أبريل 2027، مع جداول مورديها وصياغة وثائقها، إضافة إلى 4 طلبات تجريبية. في البيانات ثلاث نقاط اختناق مخفية: مورّد طاقة واحد، وشركة مسرح وصوتيات تخدم 6 فعاليات في أسبوع واحد، ومركز معارض يستضيف فعاليات متتالية. حد 10 ملايين ريال للمورّد الواحد مثال من الدراسة البحثية، وليس رقمًا لشركة. يُنمذَج خطر واحد: تعطّل مورّد حرج أو موقع وإلغاء الفعالية.`,
+    types: { conference: "مؤتمر", festival: "مهرجان", exhibition: "معرض", concert: "حفل", sports: "فعالية رياضية" },
+    roles: { power: "الطاقة المؤقتة", stage: "المسرح والصوتيات", venue: "الموقع" }
+  }
+};
+
+/* ================= Made-up test data ================= */
+const ENT = {
+  pw1: { role: "power", cr: "7000000141", name: { en: "Diyaa Temporary Power", ar: "ضياء للطاقة المؤقتة" }, aliases: ["Diyaa Temp Power Co.", "Diyaa Power Rental", "شركة ضياء للطاقة"] },
+  pw2: { role: "power", cr: "7000000388", name: { en: "Sahm Generators", ar: "سهم للمولدات" }, aliases: [] },
+  pw3: { role: "power", cr: "7000000502", name: { en: "Watan Power Solutions", ar: "وطن لحلول الطاقة" }, aliases: [] },
+  st1: { role: "stage", cr: "7000000233", name: { en: "Arc Stage & Sound", ar: "آرك للمسارح والصوتيات" }, aliases: ["ARC Stage and Sound Est.", "مؤسسة آرك للصوتيات"] },
+  st2: { role: "stage", cr: "7000000417", name: { en: "Layan Event Production", ar: "ليان لإنتاج الفعاليات" }, aliases: [] },
+  st3: { role: "stage", cr: "7000000655", name: { en: "Sadaa Audio Visual", ar: "صدى للصوتيات والمرئيات" }, aliases: [] },
+  vn1: { role: "venue", name: { en: "Northfield Exhibition Centre", ar: "مركز الشمال للمعارض" }, aliases: [] },
+  vn2: { role: "venue", name: { en: "Eastgate Convention Hall", ar: "قاعة البوابة الشرقية" }, aliases: [] },
+  vn3: { role: "venue", name: { en: "City Arena", ar: "صالة المدينة" }, aliases: [] },
+  vn4: { role: "venue", name: { en: "Al Wadi Open Grounds", ar: "ساحة الوادي المفتوحة" }, aliases: [] },
+  vn5: { role: "venue", name: { en: "Riverside Park", ar: "منتزه الضفة" }, aliases: [] },
+  vn6: { role: "venue", name: { en: "Old Town Square", ar: "ساحة البلدة القديمة" }, aliases: [] },
+  vn7: { role: "venue", name: { en: "Lakeside Pavilion", ar: "جناح البحيرة" }, aliases: [] },
+  vn8: { role: "venue", name: { en: "University Conference Centre", ar: "مركز مؤتمرات الجامعة" }, aliases: [] },
+  vn9: { role: "venue", name: { en: "Desert Camp Grounds", ar: "ساحة مخيم الصحراء" }, aliases: [] }
+};
+Object.values(ENT).forEach(e => { e.aliases = [e.name.en, e.name.ar].concat(e.aliases); });
+
+const addDays = (iso, n) => new Date(Date.parse(iso + "T00:00:00Z") + n * 864e5).toISOString().slice(0, 10);
+// P(id, type, en, ar, start, end, limit in SAR millions, cover, deps)
+// dep: [entity, name as written, registration no. as written, backup confirmed]
+let unk = 0;
+function P(n, type, en, ar, start, end, m, cover, deps) {
+  const from = addDays(start, -1);
+  const id = "P-" + n;
+  return {
+    id, type, name: { en, ar }, start, end, limit: m * 1e6, ded: m * 1e6 * 0.05, cover,
+    clause: cover === "unknown" ? (unk++ % 2 ? "unknownB" : "unknownA") : cover,
+    venue: deps[0][0],
+    deps: deps.map((d, i) => ({ e: d[0], raw: d[1] || ENT[d[0]].name.en, cr: d[2] || "", alt: !!d[3], from, to: end, line: i + 1 }))
+  };
+}
+const POLICIES = [
+  P(101, "conference", "Annual Logistics Conference", "المؤتمر السنوي للخدمات اللوجستية", "2027-02-10", "2027-02-12", 3, "covered", [["vn2"], ["pw1", "Diyaa Temp Power Co.", "7000000141"], ["st1"]]),
+  P(102, "concert", "Winter Evening Concert", "حفل أمسية الشتاء", "2027-02-11", "2027-02-11", 2.2, "covered", [["vn3"], ["st1", "ARC Stage and Sound Est.", "7000000233"], ["pw2", "", "", true]]),
+  P(103, "festival", "Heritage Food Festival", "مهرجان الأطعمة التراثية", "2027-02-08", "2027-02-13", 1.8, "unknown", [["vn4"], ["st1", "مؤسسة آرك للصوتيات"], ["pw2", "سهم للمولدات"]]),
+  P(104, "festival", "Family Lights Festival", "مهرجان أضواء العائلة", "2027-02-09", "2027-02-14", 4, "covered", [["vn5"], ["pw1", "شركة ضياء للطاقة", "7000000141"]]),
+  P(105, "conference", "Healthcare Quality Forum", "ملتقى جودة الرعاية الصحية", "2027-02-13", "2027-02-14", 1.5, "covered", [["vn2"], ["st1"]]),
+  P(106, "sports", "Indoor Padel Open", "بطولة البادل الداخلية", "2027-02-13", "2027-02-14", 1.2, "excluded", [["vn3"], ["st1"]]),
+  P(107, "exhibition", "Interior Design Exhibition", "معرض التصميم الداخلي", "2027-02-11", "2027-02-13", 2.5, "unknown", [["vn1"], ["pw1", "Diyaa Power Rental"]]),
+  P(108, "concert", "Orchestra Night", "ليلة الأوركسترا", "2027-02-12", "2027-02-12", 2, "covered", [["vn6"], ["st1", "ARC Stage and Sound Est.", "7000000233"]]),
+  P(109, "exhibition", "Automotive Aftermarket Expo", "معرض قطع غيار السيارات", "2027-02-15", "2027-02-17", 2.8, "covered", [["vn1"], ["pw2", "", "7000000388", true]]),
+  P(110, "exhibition", "Education Supplies Expo", "معرض المستلزمات التعليمية", "2027-02-19", "2027-02-21", 1.9, "covered", [["vn1", "مركز الشمال للمعارض"], ["st2"]]),
+  P(111, "concert", "Spring Gala", "حفل الربيع", "2027-03-20", "2027-03-20", 2.4, "covered", [["vn3"], ["pw1"], ["st2", "ليان لإنتاج الفعاليات"]]),
+  P(112, "conference", "Fintech Meetup", "لقاء التقنية المالية", "2027-02-23", "2027-02-24", 1.6, "covered", [["vn2"], ["st2"]]),
+  P(113, "conference", "Retail Leaders Forum", "منتدى قادة التجزئة", "2027-02-02", "2027-02-03", 1.4, "covered", [["vn8"], ["pw3"], ["st3"]]),
+  P(114, "concert", "Classical Strings Evening", "أمسية الوتريات الكلاسيكية", "2027-02-04", "2027-02-04", 1.1, "covered", [["vn6"], ["st2"], ["pw2", "", "7000000388"]]),
+  P(115, "festival", "Coffee Culture Festival", "مهرجان ثقافة القهوة", "2027-02-18", "2027-02-20", 1.6, "covered", [["vn7"], ["pw3"], ["st3", "صدى للصوتيات والمرئيات"]]),
+  P(116, "sports", "City Half Marathon", "نصف ماراثون المدينة", "2027-02-26", "2027-02-26", 0.9, "excluded", [["vn5"], ["st3"]]),
+  P(117, "exhibition", "Agritech Exhibition", "معرض التقنيات الزراعية", "2027-03-01", "2027-03-03", 2.1, "covered", [["vn8"], ["pw3", "", "7000000502"], ["st2"]]),
+  P(118, "conference", "Cybersecurity Summit", "قمة الأمن السيبراني", "2027-03-08", "2027-03-09", 2.6, "covered", [["vn2"], ["pw1", "", "7000000141"], ["st1"]]),
+  P(119, "concert", "Desert Nights Concert", "حفل ليالي الصحراء", "2027-03-11", "2027-03-11", 2.3, "unknown", [["vn9"], ["pw2"], ["st1", "ARC Stage and Sound Est."]]),
+  P(120, "festival", "Kite Festival", "مهرجان الطائرات الورقية", "2027-03-13", "2027-03-14", 0.8, "covered", [["vn5"], ["st3"]]),
+  P(121, "exhibition", "Jewellery and Watches Show", "معرض المجوهرات والساعات", "2027-03-16", "2027-03-18", 3.2, "covered", [["vn1"], ["pw2", "", "", true], ["st2"]]),
+  P(122, "conference", "Water Technology Conference", "مؤتمر تقنيات المياه", "2027-03-22", "2027-03-23", 1.5, "covered", [["vn8"], ["pw3"]]),
+  P(123, "sports", "Youth Basketball Cup", "كأس السلة للشباب", "2027-03-25", "2027-03-27", 1, "covered", [["vn3"], ["st2"]]),
+  P(124, "festival", "Spring Flower Festival", "مهرجان زهور الربيع", "2027-03-28", "2027-04-02", 2, "covered", [["vn7"], ["pw1", "ضياء للطاقة المؤقتة"], ["st3"]]),
+  P(125, "conference", "Logistics Tech Day", "يوم تقنيات الخدمات اللوجستية", "2027-04-05", "2027-04-05", 0.7, "covered", [["vn2"], ["st3"]]),
+  P(126, "concert", "Film Music Night", "ليلة موسيقى الأفلام", "2027-04-08", "2027-04-08", 1.9, "covered", [["vn3"], ["st1", "", "7000000233"], ["pw3"]]),
+  P(127, "exhibition", "Real Estate Expo", "معرض العقار", "2027-04-11", "2027-04-14", 3.5, "covered", [["vn1"], ["pw3"], ["st2"]]),
+  P(128, "festival", "Children's Theatre Week", "أسبوع مسرح الطفل", "2027-04-15", "2027-04-21", 1.3, "unknown", [["vn6"], ["st1"], ["pw2"]]),
+  P(129, "conference", "Medical Devices Forum", "ملتقى الأجهزة الطبية", "2027-04-19", "2027-04-20", 1.8, "covered", [["vn8"], ["pw3"], ["st3"]]),
+  P(130, "sports", "Cycling Tour Stage", "مرحلة طواف الدراجات", "2027-04-23", "2027-04-23", 1.2, "excluded", [["vn9"], ["pw2"]]),
+  P(131, "exhibition", "Handmade Crafts Market", "سوق الحرف اليدوية", "2027-04-24", "2027-04-27", 0.9, "covered", [["vn4"], ["pw2"], ["st3"]]),
+  P(132, "concert", "Jazz on the Lake", "جاز على البحيرة", "2027-04-29", "2027-04-29", 1.4, "covered", [["vn7"], ["st2"], ["pw3"]]),
+  P(133, "conference", "HR Leaders Meetup", "لقاء قادة الموارد البشرية", "2027-02-16", "2027-02-17", 1, "covered", [["vn2"], ["st2"]]),
+  P(134, "exhibition", "Pet Care Expo", "معرض رعاية الحيوانات الأليفة", "2027-02-24", "2027-02-26", 1.1, "covered", [["vn4"], ["pw3"], ["st3"]]),
+  P(135, "festival", "Street Food Weekend", "عطلة أكل الشوارع", "2027-03-19", "2027-03-20", 1.2, "covered", [["vn4"], ["pw3"], ["st2"]]),
+  P(136, "conference", "Energy Transition Dialogue", "حوار تحول الطاقة", "2027-04-26", "2027-04-27", 2.2, "covered", [["vn8"], ["pw3"], ["st3"]])
+];
+
+function A(key, en, ar, type, start, end, m, cover, deps) {
+  return { key, name: { en, ar }, type, start, end, limit: m * 1e6, ded: m * 1e6 * 0.05, cover,
+    deps: deps.map(d => ({ role: d[0], raw: d[1], cr: d[2] || "" })) };
+}
+const APPS = [
+  A("summit", "Smart Cities Summit", "قمة المدن الذكية", "conference", "2027-02-11", "2027-02-12", 3.6, "covered",
+    [["venue", "Crown Hotel Ballroom"], ["power", "Diyaa Temporary Power Company", "7000000141"], ["stage", "Arc Stage and Sound"]]),
+  A("gala", "Business Awards Gala", "حفل جوائز الأعمال", "concert", "2027-02-12", "2027-02-12", 2.5, "covered",
+    [["venue", "Palm Hotel Hall"], ["stage", "ARC Stage and Sound Est.", "7000000233"], ["power", "Watan Power Solution"]]),
+  A("expo", "Home and Garden Expo", "معرض المنزل والحديقة", "exhibition", "2027-02-13", "2027-02-16", 2.4, "covered",
+    [["venue", "Northfield Exhibition Center"], ["power", "Sahm Generators", "7000000388"]]),
+  A("fair", "Spring Book Fair", "معرض كتاب الربيع", "exhibition", "2027-03-04", "2027-03-06", 2, "covered",
+    [["venue", "Central Library Hall"], ["power", "Sahm Generators", "7000000388"]])
+];
+const LIMIT = 10000000;
+
+/* ================= State ================= */
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+const S = { excl: {}, outage: 0, aiSug: {}, ai: { text: null, status: "", result: null, fallback: false, err: false }, tour: null, lang: store.get("uqdah.lang") === "ar" ? "ar" : "en", app: 0, custom: null, match: {}, decision: {}, reason: {}, saved: {} };
+const t = k => T[S.lang][k];
+const L = o => (o && typeof o === "object") ? (o[S.lang] || o.en) : o;
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const loc = () => S.lang === "ar" ? "ar-SA-u-nu-latn-ca-gregory" : "en-GB";
+const day = iso => Math.floor(Date.parse(iso + "T00:00:00Z") / 864e5);
+function dfmt(iso) { const d = new Date(iso + "T00:00:00Z"); return isNaN(d) ? "" : new Intl.DateTimeFormat(loc(), { day: "numeric", month: "short", timeZone: "UTC" }).format(d); }
+function drange(a, b) { return a === b ? dfmt(a) : dfmt(a) + " – " + dfmt(b); }
+function money(v) {
+  const m = new Intl.NumberFormat(S.lang === "ar" ? "ar-SA-u-nu-latn" : "en-US", { maximumFractionDigits: 1 }).format(v / 1e6);
+  return S.lang === "ar" ? `${m} مليون ريال` : `SAR ${m}M`;
+}
+function full(v) { return new Intl.NumberFormat(S.lang === "ar" ? "ar-SA-u-nu-latn" : "en-US").format(v); }
+const isCustom = () => S.app === "custom";
+function curApp() {
+  if (!isCustom()) return APPS[S.app];
+  const c = S.custom;
+  return { key: "custom", name: { en: c.name || "—", ar: c.name || "—" }, type: c.type, start: c.start, end: c.end, limit: +c.limit || 0, ded: +c.ded || 0, cover: c.cover,
+    deps: [["venue", c.venue, ""], ["power", c.power, c.powerCr], ["stage", c.stage, c.stageCr]].filter(d => (d[1] || "").trim()).map(d => ({ role: d[0], raw: d[1].trim(), cr: (d[2] || "").replace(/\D/g, "") })) };
+}
+function depPeriod(app) { return [addDays(app.start, -1), app.end]; }
+
+/* ================= Matching ================= */
+function norm(s) {
+  return String(s || "").toLowerCase().replace(/[ً-ْـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي")
+    .replace(/&/g, " and ").replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/)
+    .filter(w => w && !["co", "company", "est", "llc", "ltd", "and", "the", "شركه", "مؤسسه"].includes(w))
+    .map(w => w.replace(/^(ال|لل)/, "")).join(" ").trim();
+}
+function dice(a, b) {
+  const g = s => { const o = []; for (let i = 0; i < s.length - 1; i++) o.push(s.slice(i, i + 2)); return o; };
+  const A = g(a), B = g(b); if (!A.length || !B.length) return 0;
+  const m = new Map(); A.forEach(x => m.set(x, (m.get(x) || 0) + 1));
+  let h = 0; B.forEach(x => { const c = m.get(x); if (c) { h++; m.set(x, c - 1); } });
+  return 2 * h / (A.length + B.length);
+}
+function resolve(d, key) {
+  if (d.cr) for (const id in ENT) if (ENT[id].cr === d.cr && ENT[id].role === d.role) return { id, how: "cr" };
+  let best = null; const n = norm(d.raw);
+  if (!n) return { id: null, how: "none" };
+  for (const id in ENT) { if (ENT[id].role !== d.role) continue; for (const a of ENT[id].aliases) { const s = norm(a) === n ? 1 : dice(n, norm(a)); if (!best || s > best.s) best = { id, s }; } }
+  if ((!best || best.s < 0.6) && S.aiSug[n]) best = { id: S.aiSug[n].id, s: 0.6, ai: S.aiSug[n].sim };
+  if (best && best.s >= 0.6) {
+    const m = S.match[key];
+    if (m === "yes") return { id: best.id, how: "confirmed" };
+    if (m === "no") return { id: null, how: "rejected", cand: best.id };
+    return { id: null, how: "pending", cand: best.id, exact: best.s === 1, ai: best.ai };
+  }
+  return { id: null, how: "none" };
+}
+
+/* ================= Analysis ================= */
+const netOf = l => (l.x.alt || l.p.cover !== "covered") ? 0 : l.p.limit - l.p.ded;
+const isoOf = n => new Date(n * 864e5).toISOString().slice(0, 10);
+/* Concentration: for each supplier or venue, the highest one-day total that would be paid if it failed (portfolio as it stands). */
+function concentration() {
+  const out = [];
+  for (const id in ENT) {
+    const ls = []; POLICIES.forEach(p => p.deps.forEach(x => { if (x.e === id && !S.excl[p.id + ":" + id]) ls.push({ p, x }); }));
+    if (!ls.length) continue;
+    const lo = Math.min(...ls.map(l => day(l.x.from))), hi = Math.max(...ls.map(l => day(l.x.to)));
+    let peak = 0, at = lo, n = 0;
+    for (let d = lo; d <= hi; d++) { const on = ls.filter(l => day(l.x.from) <= d && day(l.x.to) >= d); const v = on.reduce((a, l) => a + netOf(l), 0); if (v > peak) { peak = v; at = d; n = on.length; } }
+    out.push({ id, peak, at: isoOf(at), n });
+  }
+  return out.sort((a, b) => b.peak - a.peak).slice(0, 3);
+}
+function analyse(app) {
+  app = app || curApp();
+  const [pf, pt] = depPeriod(app);
+  const ws = day(pf), we = day(pt);
+  const findings = [], checks = [];
+  app.deps.forEach((d, i) => {
+    const key = app.key + ":" + i + ":" + norm(d.raw), r = resolve(d, key);
+    if (r.how === "pending") checks.push({ kind: "match", key, raw: d.raw, ent: r.cand, exact: r.exact, ai: r.ai });
+    if (r.how === "confirmed" || r.how === "rejected") checks.push({ kind: r.how, key, raw: d.raw, ent: r.cand || r.id });
+    if (r.how === "none" || r.how === "rejected") { checks.push({ kind: "new", raw: d.raw }); return; }
+    if (!r.id) return;
+    const all = [];
+    POLICIES.forEach(p => p.deps.forEach(x => { if (x.e === r.id) all.push({ p, x }); }));
+    if (!all.length) { checks.push({ kind: "new", raw: d.raw }); return; }
+    const ov = (l, a, b) => day(l.x.from) <= b && day(l.x.to) >= a;
+    const isEx = l => !!S.excl[l.p.id + ":" + r.id];
+    const linked = all.filter(l => !isEx(l)), dropped = all.filter(l => isEx(l) && ov(l, ws, we));
+    let win = [ws, we];
+    if (S.outage) {
+      let bestSum = -1;
+      for (let s0 = ws - S.outage + 1; s0 <= we; s0++) {
+        const s1 = s0 + S.outage - 1, sum = linked.filter(l => ov(l, s0, s1)).reduce((a, l) => a + netOf(l), 0);
+        if (sum > bestSum) { bestSum = sum; win = [s0, s1]; }
+      }
+    }
+    const same = [], other = [];
+    linked.forEach(l => (ov(l, win[0], win[1]) ? same : other).push(l));
+    let before = 0; const unclear = [], excl = [], alt = [], rows = [];
+    same.forEach(({ p, x }) => {
+      const net = p.limit - p.ded; let counted = 0;
+      if (x.alt) alt.push(p); else if (p.cover === "excluded") excl.push(p); else if (p.cover === "unknown") unclear.push(p); else counted = net;
+      before += counted;
+      rows.push({ name: L(p.name), pid: p.id, line: x.line, dates: drange(x.from, x.to), cover: p.cover, limit: p.limit, ded: p.ded, counted });
+    });
+    const appNet = app.cover === "covered" ? Math.max(0, app.limit - app.ded) : 0;
+    const after = same.length ? before + appNet : before;
+    rows.push({ isNew: true, name: L(app.name), pid: "APP", line: i + 1, dates: drange(pf, pt), cover: app.cover, limit: app.limit, ded: app.ded, counted: same.length ? appNet : 0 });
+    unclear.forEach(p => checks.push({ kind: "unclear", ev: L(p.name), pid: p.id }));
+    findings.push({ id: r.id, same, other, dropped, win, before, after, unclearAmt: unclear.reduce((s, p) => s + p.limit - p.ded, 0), unclear, excl, alt, rows });
+  });
+  const rank = { green: 0, blue: 1, amber: 2, red: 3 };
+  let verdict = "green", main = null;
+  findings.filter(f => f.same.length).forEach(f => {
+    const v = f.after > LIMIT ? "red" : f.after + f.unclearAmt > LIMIT ? "amber" : "blue";
+    if (!main || rank[v] > rank[verdict]) { verdict = v; main = f; }
+  });
+  const pending = checks.some(c => c.kind === "match");
+  if (pending && rank[verdict] < rank.amber) verdict = main ? "amber" : "pending";
+  return { app, findings: findings.sort((a, b) => b.same.length - a.same.length), checks, verdict, main };
+}
+
+/* ================= Rendering: pieces ================= */
+function diagram(f, app) {
+  const items = f.same.map(s => ({ label: L(s.p.name), kind: f.unclear.includes(s.p) ? "unclear" : (f.excl.includes(s.p) || f.alt.includes(s.p)) ? "out" : "in" }));
+  items.push({ label: L(app.name), kind: "new" });
+  const W = 430, rowH = items.length > 6 ? 36 : 46, H = Math.max(items.length * rowH + 10, 140), cx = 64, cy = H / 2;
+  const rtl = S.lang === "ar", X = x => rtl ? W - x : x;
+  let out = "";
+  items.forEach((it, i) => {
+    const y = 26 + i * rowH, x2 = 170;
+    const col = it.kind === "new" ? "var(--accent)" : it.kind === "in" ? "var(--ink-2)" : it.kind === "unclear" ? "var(--amber)" : "var(--ink-3)";
+    const dash = it.kind === "out" ? ' stroke-dasharray="4 4"' : "";
+    out += `<path d="M${X(cx)} ${cy} C ${X(cx + 60)} ${cy}, ${X(x2 - 60)} ${y}, ${X(x2)} ${y}" fill="none" stroke="${col}" stroke-width="${it.kind === "new" ? 2.5 : 1.5}"${dash}/>`;
+    out += `<circle cx="${X(x2)}" cy="${y}" r="7" fill="${it.kind === "new" ? "var(--accent)" : "var(--surface)"}" stroke="${col}" stroke-width="2"/>`;
+    const lab = it.label.length > 30 ? it.label.slice(0, 29) + "…" : it.label;
+    out += `<text x="${X(x2 + 16)}" y="${y + 4.5}" text-anchor="${rtl ? "end" : "start"}"${it.kind === "new" ? ' style="fill:var(--ink);font-weight:600"' : ""}>${esc(lab)}${it.kind === "new" ? " (" + esc(t("newEvent")) + ")" : ""}</text>`;
+  });
+  out += `<circle cx="${X(cx)}" cy="${cy}" r="22" fill="${f.after > LIMIT ? "var(--red)" : "var(--ink)"}"/>`;
+  return `<svg viewBox="0 0 ${W} ${H}" direction="ltr" role="img" aria-label="${esc(L(ENT[f.id].name))}">${out}</svg>`;
+}
+function bar(label, v, isNow) {
+  const max = Math.max(LIMIT * 1.25, v * 1.08), p = x => (x / max * 100).toFixed(1) + "%", over = v > LIMIT;
+  return `<div class="pbar"><div class="pbar-top"><span>${esc(label)}</span><b class="num"${over ? ' style="color:var(--red)"' : ""}>${money(v)}</b></div>
+    <div class="track"><div class="fill${isNow ? " now" : ""}${over ? " over" : ""}" style="width:${p(v)}"></div><div class="limit" style="inset-inline-start:${p(LIMIT)}"></div></div></div>`;
+}
+const docBtn = (pid, line, label, part) => `<button type="button" class="doclink" data-doc="${pid}" data-line="${line || ""}" data-part="${part || "s"}">${esc(label)}</button>`;
+
+function appSummary(app) {
+  const relies = app.deps.map(d => `<b>${esc(t("roles")[d.role])}</b>: <bdi>${esc(d.raw)}</bdi>`).join("<br>");
+  const venue = (app.deps.find(d => d.role === "venue") || {}).raw || "—";
+  return `<section class="app" data-tour="0">
+    <div class="app-head"><span class="app-label">${esc(t("appLabel"))}</span><span>${docBtn("APP", "", t("docApp"))}</span></div>
+    <h1>${esc(L(app.name))}</h1>
+    <dl class="facts" style="margin:0">
+      <div class="fact"><dt>${esc(t("type"))}</dt><dd>${esc(t("types")[app.type])}</dd></div>
+      <div class="fact"><dt>${esc(t("when"))}</dt><dd class="num">${esc(drange(app.start, app.end))} 2027</dd></div>
+      <div class="fact"><dt>${esc(t("where"))}</dt><dd><bdi>${esc(venue)}</bdi></dd></div>
+      <div class="fact"><dt>${esc(t("cover"))}</dt><dd class="num">${money(app.limit)}</dd></div>
+    </dl>
+    <p class="needs">${esc(t("reliesOn"))}:<br>${relies}</p>
+    <div><button type="button" class="btn" data-edit="1">${esc(t("edit"))}</button></div>
+  </section>`;
+}
+function appForm() {
+  const c = S.custom;
+  const types = Object.keys(T.en.types).map(k => `<option value="${k}"${c.type === k ? " selected" : ""}>${esc(t("types")[k])}</option>`).join("");
+  const covers = ["covered", "excluded", "unknown"].map(k => `<option value="${k}"${c.cover === k ? " selected" : ""}>${esc(t("c_" + k))}</option>`).join("");
+  const f = (id, label, val, extra) => `<div class="field${extra && extra.wide ? " wide" : ""}"><label for="f_${id}">${esc(label)}</label><input id="f_${id}" data-f="${id}" value="${esc(val)}"${extra && extra.attrs ? " " + extra.attrs : ""}></div>`;
+  return `${aiPanel()}<section class="app" data-tour="0">
+    <div><h1 style="font-size:22px">${esc(t("formTitle"))}</h1><p class="form-hint">${esc(t("formHint"))}</p></div>
+    <form id="appForm" class="form-grid" autocomplete="off">
+      ${f("name", t("fName"), c.name, { wide: true })}
+      <div class="field"><label for="f_type">${esc(t("fType"))}</label><select id="f_type" data-f="type">${types}</select></div>
+      <div class="field"><label for="f_cover">${esc(t("fCover"))}</label><select id="f_cover" data-f="cover">${covers}</select></div>
+      ${f("start", t("fStart"), c.start, { attrs: 'type="date"' })}
+      ${f("end", t("fEnd"), c.end, { attrs: 'type="date"' })}
+      ${f("limit", t("fLimit"), c.limit, { attrs: 'type="number" min="0" step="100000" inputmode="numeric" class="num"' })}
+      ${f("ded", t("fDed"), c.ded, { attrs: 'type="number" min="0" step="10000" inputmode="numeric" class="num"' })}
+      <div class="wide"><p class="form-sub">${esc(t("fSuppliers"))}</p><p class="form-hint">${esc(t("fSuppliersHint"))}</p></div>
+      ${f("venue", t("fVenue"), c.venue, { wide: true, attrs: 'list="dl_venue"' })}
+      ${f("power", t("fPower"), c.power, { attrs: 'list="dl_power"' })}
+      ${f("powerCr", t("fCr"), c.powerCr, { attrs: 'inputmode="numeric" dir="ltr"' })}
+      ${f("stage", t("fStage"), c.stage, { attrs: 'list="dl_stage"' })}
+      ${f("stageCr", t("fCr"), c.stageCr, { attrs: 'inputmode="numeric" dir="ltr"' })}
+    </form>
+    ${["venue", "power", "stage"].map(r => `<datalist id="dl_${r}">${Object.values(ENT).filter(e => e.role === r).map(e => `<option value="${esc(L(e.name))}"></option>`).join("")}</datalist>`).join("")}
+  </section>`;
+}
+
+function timeCheck(app) {
+  const n = 50, t0 = performance.now();
+  for (let i = 0; i < n; i++) analyse(app);
+  return (performance.now() - t0) / n;
+}
+const LINES = POLICIES.reduce((s, p) => s + p.deps.length, 0);
+const AI_EX = {
+  en: "Application: Riyadh Fashion Week\nEvent dates: 11-12 February 2027\nVenue: The event will be held at Crown Hotel Ballroom.\nTemporary power will be supplied by Diyaa Temporary Power Company (CR 7000000141).\nStage, sound and lighting: Arc Stage and Sound.\nCatering: Golden Spoon Catering.\nCancellation limit: SAR 3,600,000. Deductible: SAR 180,000.",
+  ar: "طلب تأمين: معرض الأثاث الحديث\nتاريخ الفعالية: من 13 إلى 16 فبراير 2027\nتقام الفعالية في مركز الشمال للمعارض.\nيوفر الطاقة المؤقتة والمولدات: شركة ضياء للطاقة، سجل تجاري 7000000141.\nتجهيز المسرح والصوتيات والإضاءة: مؤسسة آرك للصوتيات.\nخدمات الضيافة: مطابخ الريف.\nحد تعويض الإلغاء: 2,400,000 ريال. التحمل: 120,000 ريال."
+};
+/* Saved from a real run of the same model on the two example texts (used only if the model cannot load). */
+const AI_SAVED = {
+  en: { name: "Riyadh Fashion Week", start: "2027-02-11", end: "2027-02-12", limit: 3600000, ded: 180000, venue: { name: "Crown Hotel Ballroom", cr: "", score: 0.886 }, power: { name: "Diyaa Temporary Power Company", cr: "7000000141", score: 0.877 }, stage: { name: "Arc Stage and Sound", cr: "", score: 0.897 }, ms: 964 },
+  ar: { name: "معرض الأثاث الحديث", start: "2027-02-13", end: "2027-02-16", limit: 2400000, ded: 120000, venue: { name: "مركز الشمال للمعارض", cr: "", score: 0.902 }, power: { name: "شركة ضياء للطاقة", cr: "7000000141", score: 0.901 }, stage: { name: "مؤسسة آرك للصوتيات", cr: "", score: 0.940 }, ms: 243 }
+};
+function aiPanel() {
+  const A = S.ai, loaded = window.UqdahAI && UqdahAI.isLoaded();
+  if (A.text == null) A.text = AI_EX[S.lang];
+  const mb = window.UqdahAI ? Math.round(UqdahAI.totalBytes / 1e6) : 157;
+  const r = A.result;
+  const row = (role) => { const x = r && r[role]; return `<div class="ai-row"><span>${esc(t("roles")[role])}</span><b><bdi>${x ? esc(x.name) : esc(t("aiNone"))}</bdi>${x && x.cr ? ` <span class="num" dir="ltr">${esc(x.cr)}</span>` : ""}</b>${x ? `<span class="ai-conf num">${esc(t("aiConf"))} ${(x.score * 100).toFixed(0)}%</span>` : "<span></span>"}</div>`; };
+  return `<section class="ai-panel">
+    <div><h2 style="font-size:18px">${esc(t("aiTitle"))}</h2><p class="form-hint" style="margin-top:4px">${esc(t("aiHint"))}</p></div>
+    <div class="field"><label for="aiText">${esc(t("aiLabel"))}</label><textarea id="aiText" rows="7">${esc(A.text)}</textarea></div>
+    <div class="ai-actions">
+      <button type="button" class="btn btn-primary" data-ai="run"${A.busy ? " disabled" : ""}>${esc(loaded ? t("aiRun") : t("aiRunFirst")(mb))}</button>
+      <button type="button" class="btn" data-ai="en">${esc(t("aiExEn"))}</button>
+      <button type="button" class="btn" data-ai="ar">${esc(t("aiExAr"))}</button>
+    </div>
+    <div id="aiStatus" role="status" class="ai-status">${A.status ? esc(A.status) : ""}${A.busy && A.pct != null ? `<div class="track" style="margin-top:6px"><div class="fill now" style="width:${A.pct}%"></div></div>` : ""}</div>
+    ${A.err ? `<p class="ai-warn">${esc(t("aiFail"))}</p>` : ""}
+    ${r ? `<div class="ai-out">${A.fallback ? `<p class="ai-warn">${esc(t("aiFallback"))}</p>` : ""}<p class="section-label">${esc(t("aiFound"))}</p>${row("venue")}${row("power")}${row("stage")}
+      <p class="form-hint">${A.fallback ? "" : esc(t("aiTook")((r.ms / 1000).toFixed(1))) + " "}${esc(t("aiModel"))}</p></div>` : ""}
+  </section>`;
+}
+function applyAI(r) {
+  const c = S.custom;
+  if (r.name) c.name = r.name;
+  if (r.start) c.start = r.start;
+  if (r.end) c.end = r.end;
+  if (r.limit) c.limit = r.limit;
+  if (r.ded) c.ded = r.ded;
+  c.venue = r.venue ? r.venue.name : ""; c.power = r.power ? r.power.name : ""; c.powerCr = r.power ? r.power.cr : ""; c.stage = r.stage ? r.stage.name : ""; c.stageCr = r.stage ? r.stage.cr : "";
+}
+async function aiSuggest(r) {
+  if (!(window.UqdahAI && UqdahAI.isLoaded())) return;
+  for (const role of ["venue", "power", "stage"]) {
+    const x = r[role]; if (!x) continue;
+    const ids = Object.keys(ENT).filter(id => ENT[id].role === role);
+    const names = [], owner = [];
+    ids.forEach(id => { names.push(ENT[id].name.en, ENT[id].name.ar); owner.push(id, id); });
+    const sims = await UqdahAI.similar(x.name, names);
+    const best = {}; sims.forEach((v, i) => { if (!best[owner[i]] || v > best[owner[i]]) best[owner[i]] = v; });
+    const rank = Object.entries(best).sort((a, b) => b[1] - a[1]);
+    if (rank[0][1] >= 0.88 && rank[0][1] - (rank[1] ? rank[1][1] : 0) >= 0.03) S.aiSug[norm(x.name)] = { id: rank[0][0], sim: rank[0][1] };
+  }
+}
+async function runAI() {
+  const A = S.ai, box = document.getElementById("aiText");
+  A.text = box ? box.value : A.text;
+  A.err = false; A.fallback = false; A.busy = true; A.pct = null;
+  const rerender = () => { const el = document.querySelector(".ai-panel"); if (el) el.outerHTML = aiPanel(); };
+  try {
+    if (!UqdahAI.isLoaded()) {
+      A.pct = 0; A.status = t("aiLoading")(0); rerender();
+      let last = -1;
+      await UqdahAI.load(f => { const p = Math.round(f * 100); if (p !== last) { last = p; A.pct = p; A.status = t("aiLoading")(p); const st = document.getElementById("aiStatus"); if (st) st.innerHTML = `${esc(A.status)}<div class="track" style="margin-top:6px"><div class="fill now" style="width:${p}%"></div></div>`; } });
+    }
+    A.pct = null; A.status = t("aiReading"); rerender();
+    const r = await UqdahAI.extract(A.text);
+    await aiSuggest(r);
+    A.result = r; A.status = ""; applyAI(r);
+  } catch (e) {
+    console.warn(e);
+    const which = A.text.trim() === AI_EX.en.trim() ? "en" : A.text.trim() === AI_EX.ar.trim() ? "ar" : null;
+    A.status = "";
+    if (which) { A.result = AI_SAVED[which]; A.fallback = true; applyAI(A.result); } else { A.err = true; A.result = null; }
+  }
+  A.busy = false;
+  renderCheck();
+}
+
+function resultsHtml() {
+  const a = analyse(), app = a.app;
+  const ms = timeCheck(app);
+  const timed = `<p class="timed num">${esc(t("timed")(POLICIES.length, LINES, ms < 1 ? ms.toFixed(2) : ms.toFixed(1)))}</p>`;
+  let verdictHtml;
+  if (a.verdict === "pending") verdictHtml = `<section class="answer amber"><span class="tag">${esc(t("v_amber_tag"))}</span><h2>${esc(t("v_pend_h"))}</h2><p>${esc(t("v_pend_p"))}</p></section>`;
+  else if (a.verdict === "green" || !a.main) verdictHtml = `<section class="answer green"><span class="tag">${esc(t("v_green_tag"))}</span><h2>${esc(t("v_green_h"))}</h2><p>${esc(t("v_green_p"))}</p></section>`;
+  else { const s = L(ENT[a.main.id].name), n = a.main.same.length; verdictHtml = `<section class="answer ${a.verdict}"><span class="tag">${esc(t("v_" + a.verdict + "_tag"))}</span><h2>${esc(t("v_" + a.verdict + "_h")(s, n))}</h2><p>${esc(t("v_" + a.verdict + "_p"))}</p></section>`; }
+
+  const findings = a.findings.map(f => {
+    const s = L(ENT[f.id].name), notes = [];
+    f.unclear.forEach(p => notes.push(t("unclear")(L(p.name))));
+    f.excl.forEach(p => notes.push(t("excluded")(L(p.name))));
+    f.alt.forEach(p => notes.push(t("alt")(L(p.name))));
+    if (f.other.length) notes.push(t("otherDates")(f.other.length));
+    const body = f.same.length ? `<div class="f-body"><div class="diagram">${diagram(f, app)}</div>
+        <div class="payout" data-tour="${f === a.main ? 2 : ""}"><p class="payout-q">${esc(t("payoutQ")(s))}</p>${bar(t("today"), f.before, false)}${bar(t("withThis"), f.after, true)}
+        <p class="limit-note"><i></i>${esc(t("limitLbl"))}: <span class="num">${money(LIMIT)}</span></p></div></div>` : `<p>${esc(t("usedNone"))}</p>`;
+    return `<article class="finding"><div class="f-head"><h3>${esc(s)}</h3><span class="f-role">${esc(t("roles")[ENT[f.id].role])}</span></div>
+      ${f.same.length ? `<p>${esc(t("usedBy")(f.same.length))}</p>` : ""}${body}
+      ${notes.length ? `<div class="f-notes">${notes.map(x => `<p>${esc(x)}</p>`).join("")}</div>` : ""}</article>`;
+  }).join("");
+
+  const checks = a.checks.map(c => {
+    if (c.kind === "match") return `<div class="check"><span class="check-mark amber"></span><div class="check-text">${esc(t("q_match")(c.raw, L(ENT[c.ent].name)))}<small>${esc(c.ai ? t("q_match_ai")(c.ai.toFixed(2)) : t(c.exact ? "q_match_x" : "q_match_s"))}</small></div><div class="check-actions"><button class="btn btn-primary" data-m="${esc(c.key)}" data-v="yes">${esc(t("same"))}</button><button class="btn" data-m="${esc(c.key)}" data-v="no">${esc(t("different"))}</button></div></div>`;
+    if (c.kind === "confirmed") return `<div class="check"><span class="check-mark green"></span><div class="check-text">${esc(t("q_confirmed")(c.raw, L(ENT[c.ent].name)))}</div><div class="check-actions"><button class="btn" data-m="${esc(c.key)}" data-v="">${esc(t("undo"))}</button></div></div>`;
+    if (c.kind === "rejected") return `<div class="check"><span class="check-mark grey"></span><div class="check-text">${esc(t("q_rejected")(c.raw))}</div><div class="check-actions"><button class="btn" data-m="${esc(c.key)}" data-v="">${esc(t("undo"))}</button></div></div>`;
+    if (c.kind === "unclear") return `<div class="check"><span class="check-mark amber"></span><div class="check-text">${esc(t("q_unclear")(c.ev))}<small>${esc(t("q_unclear_s"))} ${docBtn(c.pid, "", t("srcWording"), "w")}</small></div></div>`;
+    return `<div class="check"><span class="check-mark grey"></span><div class="check-text">${esc(t("q_new")(c.raw))}</div></div>`;
+  }).join("") || `<p>${esc(t("q_none"))}</p>`;
+
+  const opts = ["accept", "cond", "ri", "info", "decline"], dec = S.decision[app.key];
+  const calc = a.findings.filter(f => f.same.length).map(f => `
+    <h3 style="font-size:15px">${esc(L(ENT[f.id].name))}</h3>
+    <div class="tbl"><table><thead><tr><th>${esc(t("thEvent"))}</th><th>${esc(t("thDates"))}</th><th>${esc(t("thCover"))}</th><th class="r">${esc(t("thLimit"))}</th><th class="r">${esc(t("thDed"))}</th><th class="r">${esc(t("thCount"))}</th><th>${esc(t("thSrc"))}</th></tr></thead>
+    <tbody>${f.rows.map(r => `<tr${r.isNew ? ' style="background:var(--accent-soft)"' : ""}><td>${esc(r.name)}</td><td class="num" style="white-space:nowrap">${esc(r.dates)}</td><td>${esc(t("c_" + r.cover))}</td><td class="r num">${full(r.limit)}</td><td class="r num">${full(r.ded)}</td><td class="r num">${full(r.counted)}</td>
+      <td>${r.isNew ? docBtn("APP", r.line, t("srcApp")(r.line)) : docBtn(r.pid, r.line, t("srcLine")(r.line)) + "<br>" + docBtn(r.pid, "", t("srcWording"), "w")}</td></tr>`).join("")}</tbody></table></div>`).join("");
+
+  return `${verdictHtml}${timed}
+    ${findings ? `<section data-tour="1"><h2 class="sec-h">${esc(t("whyTitle"))}</h2>${findings}</section>` : ""}
+    <section><h2 class="sec-h">${esc(t("checksTitle"))}</h2><div class="checks">${checks}</div></section>
+    <section class="decide" data-tour="3">
+      <div><h2 class="sec-h" style="margin:0">${esc(t("decideTitle"))}</h2><p class="decide-hint">${esc(t("decideHint"))}</p></div>
+      <div class="choices">${opts.map(o => `<button type="button" data-d="${o}" aria-pressed="${dec === o}">${esc(t("d_" + o))}</button>`).join("")}</div>
+      ${dec ? `<div class="field"><label for="reason">${esc(t("reason"))}</label><textarea id="reason" placeholder="${esc(t("reasonPh"))}">${esc(S.reason[app.key] || "")}</textarea></div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button type="button" class="btn btn-primary" id="saveBtn">${esc(t("save"))}</button><span class="recorded" role="status">${S.saved[app.key] ? esc(t("saved")(t("d_" + S.saved[app.key]))) : ""}</span></div>` : ""}
+    </section>
+    <section>
+      ${calc ? `<details><summary>${esc(t("detTitle"))}</summary><div class="d-body">${calc}<p class="formula">${esc(t("formula"))}</p></div></details>` : ""}
+      <details><summary>${esc(t("portTitle")(POLICIES.length))}</summary><div class="d-body"><p class="form-hint">${esc(t("portHint"))}</p><div class="tbl"><table><thead><tr><th>${esc(t("thEvent"))}</th><th>${esc(t("thDates"))}</th><th>${esc(t("thVenue"))}</th><th>${esc(t("thCover"))}</th><th class="r">${esc(t("thLimit"))}</th></tr></thead>
+        <tbody>${POLICIES.slice().sort((x, y) => x.start < y.start ? -1 : 1).map(p => `<tr><td>${docBtn(p.id, "", L(p.name))}</td><td class="num" style="white-space:nowrap">${esc(drange(p.start, p.end))}</td><td>${esc(L(ENT[p.venue].name))}</td><td>${esc(t("c_" + p.cover))}</td><td class="r num">${full(p.limit)}</td></tr>`).join("")}</tbody></table></div></div></details>
+    </section>`;
+}
+
+/* ================= Rendering: views ================= */
+function renderCheck() {
+  const app = curApp();
+  document.getElementById("view-check").innerHTML = `
+    <div class="samples"><span>${esc(t("sample"))}</span><div class="seg">${APPS.map((x, i) => `<button type="button" data-app="${i}" aria-pressed="${S.app === i}">${esc(L(x.name))}</button>`).join("")}<button type="button" data-app="custom" aria-pressed="${isCustom()}">${esc(t("own"))}</button></div></div>
+    <div id="appArea">${isCustom() ? appForm() : appSummary(app)}</div>
+    <div id="resArea" style="display:grid;gap:28px">${resultsHtml()}</div>`;
+}
+function renderResults() { const r = document.getElementById("resArea"); if (r) r.innerHTML = resultsHtml(); }
+
+function renderHow() {
+  const li = a => a.map(x => `<li>${esc(x)}</li>`).join("");
+  document.getElementById("view-how").innerHTML = `<section class="how">
+      <div><h1>${esc(t("howTitle"))}</h1><p class="lede">${esc(t("howLede"))}</p></div>
+      <ol class="steps">${t("steps").map(([a, b]) => `<li><b>${esc(a)}</b><span>${esc(b)}</span></li>`).join("")}</ol>
+      <div class="two"><div class="box"><h2>${esc(t("showsTitle"))}</h2><ul>${li(t("shows"))}</ul></div><div class="box"><h2>${esc(t("notTitle"))}</h2><ul>${li(t("nots"))}</ul></div></div>
+      <div class="box"><h2>${esc(t("dataTitle"))}</h2><p style="color:var(--ink-2)">${esc(t("dataText")(POLICIES.length))}</p></div>
+    </section>`;
+}
+
+/* ================= Test documents ================= */
+function openDoc(pid, line, part) {
+  const dlg = document.getElementById("docDlg");
+  let title, facts, lines, wording;
+  if (pid === "APP") {
+    const app = curApp(), [pf, pt] = depPeriod(app);
+    title = `${t("docApp")}: ${L(app.name)}`;
+    facts = [[t("dEvent"), L(app.name)], [t("dDates"), drange(app.start, app.end) + " 2027"], [t("dLimit"), "SAR " + full(app.limit)], [t("dDed"), "SAR " + full(app.ded)]];
+    lines = app.deps.map((d, i) => ({ line: i + 1, role: d.role, raw: d.raw, cr: d.cr, from: pf, to: pt, alt: false }));
+    wording = null;
+  } else {
+    const p = POLICIES.find(x => x.id === pid);
+    title = `${pid}: ${L(p.name)}`;
+    facts = [[t("dPolicy"), pid], [t("dEvent"), L(p.name)], [t("dDates"), drange(p.start, p.end) + " 2027"], [t("dVenue"), L(ENT[p.venue].name)], [t("dLimit"), "SAR " + full(p.limit)], [t("dDed"), "SAR " + full(p.ded)]];
+    lines = p.deps.map(d => ({ line: d.line, role: ENT[d.e].role, raw: d.raw, cr: d.cr, from: d.from, to: d.to, alt: d.alt }));
+    wording = t("clauses")[p.clause];
+  }
+  dlg.innerHTML = `<div class="doc-h"><div><small>${esc(t("docTest"))}</small><h2 style="font-size:18px">${esc(title)}</h2></div><button type="button" class="btn" data-close="1">${esc(t("close"))}</button></div>
+    <div class="doc-b">
+      <dl class="doc-facts">${facts.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd class="num">${esc(v)}</dd></div>`).join("")}</dl>
+      <div><h3>${esc(pid === "APP" ? t("docApp") : t("docSchedule"))}</h3>
+        <div class="tbl"><table><thead><tr><th>${esc(t("dLine"))}</th><th>${esc(t("dRole"))}</th><th>${esc(t("dName"))}</th><th>${esc(t("dCr"))}</th><th>${esc(t("dNeeded"))}</th><th>${esc(t("dBackup"))}</th></tr></thead>
+        <tbody>${lines.map(l => `<tr id="docline-${l.line}" class="${String(l.line) === String(line) && part !== "w" ? "hl" : ""}"><td class="num">${l.line}</td><td>${esc(t("roles")[l.role])}</td><td><bdi>${esc(l.raw)}</bdi></td><td class="num" dir="ltr" style="text-align:start">${esc(l.cr || "—")}</td><td class="num" style="white-space:nowrap">${esc(drange(l.from, l.to))}</td><td>${esc(l.alt ? t("yes") : t("no"))}</td></tr>`).join("")}</tbody></table></div></div>
+      ${wording ? `<div><h3>${esc(t("docWording"))}</h3><p class="clause${part === "w" ? " hl" : ""}" id="docwording">${esc(wording)}</p></div>` : ""}
+    </div>`;
+  if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+  const target = part === "w" ? document.getElementById("docwording") : (line ? document.getElementById("docline-" + line) : null);
+  if (target) target.scrollIntoView({ block: "center" });
+  const cb = dlg.querySelector("[data-close]"); if (cb) cb.focus({ preventScroll: true });
+}
+function closeDoc() { const d = document.getElementById("docDlg"); if (d.open) { if (d.close) d.close(); else d.removeAttribute("open"); } }
+
+/* ================= Guided demo ================= */
+function facts() {
+  const a = analyse(APPS[0]), f = a.main;
+  const ms = timeCheck(APPS[0]);
+  return { ms: ms < 1 ? ms.toFixed(2) : ms.toFixed(1), total: POLICIES.length, s: L(ENT[f.id].name), n: f.same.length, before: money(f.before), after: money(f.after), limit: money(LIMIT) };
+}
+function renderDemo() {
+  const el = document.getElementById("view-demo");
+  if (S.tour === "end") {
+    const x = facts();
+    el.innerHTML = `<section class="intro"><span class="kicker">${esc(t("endKicker"))}</span><h1>${esc(t("endH"))}</h1>
+      <div class="end-list"><div><span>${esc(t("endShared"))}</span><b>${esc(x.s)}</b></div><div><span>${esc(t("endEvents"))}</span><b class="num">${x.n}</b></div>
+      <div><span>${esc(t("endPayout"))}</span><b class="num" style="color:var(--red)">${esc(t("endFromTo")(x.before, x.after))}</b></div><div><span>${esc(t("endLimit"))}</span><b class="num">${esc(x.limit)}</b></div><div><span>${esc(t("endTime"))}</span><b class="num">${esc(x.ms)} ms</b></div></div>
+      <div class="row"><button type="button" class="btn btn-primary btn-lg" data-go="explore">${esc(t("explore"))}</button><button type="button" class="linkbtn" data-go="replay">${esc(t("replay"))}</button></div></section>`;
+  } else {
+    el.innerHTML = `<section class="intro"><span class="kicker">${esc(t("introKicker"))}</span><h1>${esc(t("introH"))}</h1><p>${esc(t("introP"))}</p>
+      <div class="row"><button type="button" class="btn btn-primary btn-lg" data-go="start">${esc(t("start"))}</button><button type="button" class="linkbtn" data-go="explore">${esc(t("skip"))}</button></div></section>`;
+  }
+}
+function renderGuide(scroll) {
+  const g = document.getElementById("guide"), on = typeof S.tour === "number";
+  document.body.classList.toggle("touring", on);
+  document.querySelectorAll(".spot").forEach(e => e.classList.remove("spot"));
+  document.querySelectorAll(".spot-wrap").forEach(e => e.classList.remove("spot-wrap"));
+  if (!on) { g.hidden = true; return; }
+  const i = S.tour, n = t("tour").length;
+  const target = document.querySelector(`#view-check [data-tour="${i}"]`);
+  if (target) {
+    target.classList.add("spot");
+    let p = target.parentElement; while (p && p.id !== "view-check") { p.classList.add("spot-wrap"); p = p.parentElement; }
+    if (scroll) {
+      const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches, r = target.getBoundingClientRect();
+      window.scrollTo({ top: Math.max(0, window.scrollY + r.top - Math.max(80, (window.innerHeight - 240 - r.height) / 2)), behavior: reduce ? "auto" : "smooth" });
+    }
+  }
+  g.hidden = false;
+  g.innerHTML = `<div class="guide-card" role="dialog" aria-live="polite" aria-label="${esc(t("stepOf")(i + 1, n))}">
+    <div class="guide-row"><span class="guide-step">${esc(t("stepOf")(i + 1, n))}</span><span class="dots">${t("tour").map((_, k) => `<i class="${k === i ? "on" : ""}"></i>`).join("")}</span></div>
+    <p class="guide-text">${esc(t("tour")[i](facts()))}</p>
+    <div class="guide-row"><button type="button" class="btn" data-go="back"${i === 0 ? ' disabled style="visibility:hidden"' : ""}>${esc(t("back"))}</button><button type="button" class="btn btn-primary" data-go="next">${esc(i === n - 1 ? t("finish") : t("next"))}</button></div></div>`;
+  const nb = g.querySelector('[data-go="next"]'); if (nb) nb.focus({ preventScroll: true });
+}
+function go(action) {
+  if (action === "start" || action === "replay") { S.app = 0; S.match = {}; S.decision = {}; S.saved = {}; S.tour = 0; show("check", "demo"); renderCheck(); renderGuide(true); return; }
+  if (action === "next") { if (S.tour < t("tour").length - 1) { S.tour++; renderGuide(true); } else { S.tour = "end"; renderGuide(false); show("demo"); renderDemo(); window.scrollTo(0, 0); } return; }
+  if (action === "back") { if (S.tour > 0) { S.tour--; renderGuide(true); } return; }
+  if (action === "explore") { S.tour = null; renderGuide(false); if (location.hash !== "#check") location.hash = "#check"; else route(); window.scrollTo(0, 0); }
+}
+
+/* ================= Simple view (default) ================= */
+Object.assign(T.en, {
+  sH: "Does this new event share a supplier with events you already insure?",
+  sLabel: "Application text", sPh: "Paste the event application here",
+  sExample: "Use an example", sCheck: "Check",
+  sReading: "Reading the application…",
+  sLoading: p => `First time only: loading the reading model in your browser (${p}%)`,
+  sFail: "Uqdah could not read this text. Try the example.",
+  sNoDates: "No event dates found in the text.",
+  sTag: { red: "Above the limit", amber: "Close to the limit", blue: "Within the limit", green: "No shared risk", pending: "One name to confirm" },
+  sHead: { red: s => `Shared risk with ${s}`, amber: s => `Shared risk with ${s}`, blue: s => `Shared supplier: ${s}`, green: () => "No shared risk found", pending: () => "Confirm one name first" },
+  sLine: {
+    red: x => `${x.n} insured events need it on the same days. If it fails, the possible payout rises from ${x.b} to ${x.a}, above the ${x.l} limit.`,
+    amber: x => `${x.n} insured events need it on the same days. If it fails, the possible payout rises from ${x.b} to ${x.a}. Some covers are unclear and could take it above the ${x.l} limit.`,
+    blue: x => `${x.n} insured events need it on the same days. If it fails, the possible payout rises from ${x.b} to ${x.a}, within the ${x.l} limit.`,
+    green: () => "No insured event needs the same supplier or venue on these dates.",
+    pending: () => "A supplier in the text looks like one already in the portfolio. Confirm it under Details."
+  },
+  sDetails: "Details", sRead: "What Uqdah read from the text", sConfirm: "To confirm",
+  sExNote: "This example was read earlier by the same model. Pasted text is read live in your browser.",
+  sFoot: "Made-up test data. Uqdah does not price or decide cover. The underwriter decides. The limit of SAR 10M is an example from the research study.",
+  sFull: "Full tool", sHow: "How it works",
+  oTitle: "If the supplier stops for", oOpts: [[0, "The whole event"], [3, "3 days"], [1, "1 day"]],
+  oWorst: d => `Worst case: ${d}`,
+  lTitle: s => `Events linked to ${s}`, lHint: "Remove a link if the event does not really depend on this supplier.",
+  lExclude: "Remove link", lInclude: "Restore", lRemoved: "Removed by you", lNotCounted: "Not counted",
+  mTitle: "How the amount is calculated",
+  cTitle: "Most concentrated suppliers in the portfolio",
+  cHint: "Highest total payout on a single day if that one supplier or venue fails, as a share of the limit.",
+  cRow: (n, d) => `${n} events on ${d}`
+});
+Object.assign(T.ar, {
+  sH: "هل تعتمد هذه الفعالية الجديدة على مورّد تعتمد عليه فعاليات تؤمّن عليها حاليًا؟",
+  sLabel: "نص الطلب", sPh: "الصق نص طلب التأمين هنا",
+  sExample: "استخدم مثالًا", sCheck: "افحص",
+  sReading: "جارٍ قراءة الطلب…",
+  sLoading: p => `أول مرة فقط: تحميل نموذج القراءة في متصفحك (${p}%)`,
+  sFail: "لم تستطع عُقدة قراءة هذا النص. جرّب المثال.",
+  sNoDates: "لم نجد تاريخ الفعالية في النص.",
+  sTag: { red: "فوق الحد", amber: "قريب من الحد", blue: "ضمن الحد", green: "لا يوجد خطر مشترك", pending: "اسم يحتاج تأكيد" },
+  sHead: { red: s => `خطر مشترك مع ${s}`, amber: s => `خطر مشترك مع ${s}`, blue: s => `مورّد مشترك: ${s}`, green: () => "لا يوجد خطر مشترك", pending: () => "أكّد اسمًا واحدًا أولًا" },
+  sLine: {
+    red: x => `${x.n} فعاليات مؤمّن عليها تحتاجه في الأيام نفسها. إذا تعطّل يرتفع التعويض المحتمل من ${x.b} إلى ${x.a}، أي فوق الحد ${x.l}.`,
+    amber: x => `${x.n} فعاليات مؤمّن عليها تحتاجه في الأيام نفسها. إذا تعطّل يرتفع التعويض المحتمل من ${x.b} إلى ${x.a}. بعض التغطيات غير واضحة وقد تتجاوز الحد ${x.l}.`,
+    blue: x => `${x.n} فعاليات مؤمّن عليها تحتاجه في الأيام نفسها. إذا تعطّل يرتفع التعويض المحتمل من ${x.b} إلى ${x.a}، ضمن الحد ${x.l}.`,
+    green: () => "لا توجد فعالية مؤمّن عليها تحتاج المورّد أو الموقع نفسه في هذه التواريخ.",
+    pending: () => "اسم مورّد في النص يشبه اسمًا موجودًا في المحفظة. أكّده في التفاصيل."
+  },
+  sDetails: "التفاصيل", sRead: "ما قرأته عُقدة من النص", sConfirm: "للتأكيد",
+  sExNote: "هذا المثال قرأه النموذج نفسه مسبقًا. النص الذي تلصقه يُقرأ مباشرة في متصفحك.",
+  sFoot: "بيانات تجريبية مصطنعة. عُقدة لا تسعّر ولا تقرر التغطية، القرار للمكتتب. حد 10 ملايين ريال مثال من الدراسة البحثية.",
+  sFull: "الأداة الكاملة", sHow: "كيف تعمل",
+  oTitle: "إذا توقف المورّد لمدة", oOpts: [[0, "كامل الفعالية"], [3, "3 أيام"], [1, "يوم واحد"]],
+  oWorst: d => `أسوأ حالة: ${d}`,
+  lTitle: s => `الفعاليات المرتبطة بـ ${s}`, lHint: "احذف الرابط إذا كانت الفعالية لا تعتمد فعلًا على هذا المورّد.",
+  lExclude: "احذف الرابط", lInclude: "أرجعه", lRemoved: "حذفته أنت", lNotCounted: "غير محسوبة",
+  mTitle: "طريقة حساب المبلغ",
+  cTitle: "أكثر الموردين تركّزًا في المحفظة",
+  cHint: "أعلى تعويض محتمل في يوم واحد إذا تعطّل هذا المورّد أو الموقع وحده، كنسبة من الحد.",
+  cRow: (n, d) => `${n} فعاليات في ${d}`
+});
+const Q = { text: "", busy: false, pct: null, status: "", err: "", r: null, ex: false };
+function qApp() {
+  const r = Q.r; if (!r) return null;
+  const deps = ["venue", "power", "stage"].filter(k => r[k]).map(k => ({ role: k, raw: r[k].name, cr: r[k].cr || "" }));
+  return { key: "paste", name: { en: r.name || "—", ar: r.name || "—" }, type: "conference", start: r.start, end: r.end, limit: r.limit || 0, ded: r.ded || 0, cover: "covered", deps };
+}
+function qAnswer() {
+  const app = qApp(); if (!app) return "";
+  const a = analyse(app), v = a.verdict, f = a.main;
+  const s = f ? L(ENT[f.id].name) : "";
+  const x = f ? { n: f.same.length, b: money(f.before), a: money(f.after), l: money(LIMIT) } : {};
+  const head = t("sHead")[v](s), line = (f || v === "green" || v === "pending") ? t("sLine")[f ? (v === "pending" ? "amber" : v) : v](x) : "";
+  const read = ["venue", "power", "stage"].map(k => `<div class="q-read"><span>${esc(t("roles")[k])}</span><b><bdi>${Q.r[k] ? esc(Q.r[k].name) : "—"}</bdi></b></div>`).join("");
+  const confirms = a.checks.filter(c => c.kind === "match" || c.kind === "confirmed" || c.kind === "rejected").map(c => c.kind === "match"
+    ? `<div class="check"><span class="check-mark amber"></span><div class="check-text">${esc(t("q_match")(c.raw, L(ENT[c.ent].name)))}</div><div class="check-actions"><button class="btn btn-primary" data-m="${esc(c.key)}" data-v="yes">${esc(t("same"))}</button><button class="btn" data-m="${esc(c.key)}" data-v="no">${esc(t("different"))}</button></div></div>`
+    : `<div class="check"><span class="check-mark ${c.kind === "confirmed" ? "green" : "grey"}"></span><div class="check-text">${esc(c.kind === "confirmed" ? t("q_confirmed")(c.raw, L(ENT[c.ent].name)) : t("q_rejected")(c.raw))}</div><div class="check-actions"><button class="btn" data-m="${esc(c.key)}" data-v="">${esc(t("undo"))}</button></div></div>`).join("");
+  const unclear = a.checks.filter(c => c.kind === "unclear").map(c => `<div class="check"><span class="check-mark amber"></span><div class="check-text">${esc(t("q_unclear")(c.ev))}<small>${docBtn(c.pid, "", t("srcWording"), "w")}</small></div></div>`).join("");
+  const graph = f && f.same.length ? `<div class="q-graph"><div class="diagram">${diagram(f, app)}</div><div class="payout">${bar(t("today"), f.before, false)}${bar(t("withThis"), f.after, true)}<p class="limit-note"><i></i>${esc(t("limitLbl"))}: <span class="num">${money(LIMIT)}</span></p></div></div>` : "";
+  const outage = a.findings.length ? `<div><p class="section-label">${esc(t("oTitle"))}</p><div class="seg q-seg">${t("oOpts").map(([k, lab]) => `<button type="button" data-o="${k}" aria-pressed="${S.outage === k}">${esc(lab)}</button>`).join("")}</div>
+    ${S.outage && f && f.same.length ? `<p class="form-hint" style="margin-top:6px">${esc(t("oWorst")(drange(isoOf(f.win[0]), isoOf(f.win[1]))))}</p>` : ""}</div>` : "";
+  const links = a.findings.filter(g => g.same.length || g.dropped.length).map(g => {
+    const rows = g.same.map(({ p, x }) => { const c = g.rows.find(r => r.pid === p.id); return `<div class="q-link"><div><b>${esc(L(p.name))}</b><small class="num">${esc(drange(p.start, p.end))} · ${c && c.counted ? money(c.counted) : esc(t("lNotCounted"))}</small><small>${docBtn(p.id, x.line, t("srcLine")(x.line))} · ${docBtn(p.id, "", t("srcWording"), "w")}</small></div><button type="button" class="btn" data-x="${p.id}:${g.id}">${esc(t("lExclude"))}</button></div>`; })
+      .concat(g.dropped.map(({ p }) => `<div class="q-link off"><div><b>${esc(L(p.name))}</b><small>${esc(t("lRemoved"))}</small></div><button type="button" class="btn" data-x="${p.id}:${g.id}">${esc(t("lInclude"))}</button></div>`)).join("");
+    return `<div><p class="section-label">${esc(t("lTitle")(L(ENT[g.id].name)))}</p><p class="form-hint">${esc(t("lHint"))}</p><div class="q-links-list">${rows}</div></div>`;
+  }).join("");
+  const dec = S.decision.paste;
+  const decide = `<div><p class="section-label">${esc(t("decideTitle"))}</p><p class="form-hint">${esc(t("decideHint"))}</p>
+    <div class="choices q-choices">${["accept", "cond", "ri", "info", "decline"].map(o => `<button type="button" data-d="${o}" aria-pressed="${dec === o}">${esc(t("d_" + o))}</button>`).join("")}</div>
+    ${dec ? `<p class="recorded" role="status" style="margin-top:8px">${esc(t("saved")(t("d_" + dec)))}</p>` : ""}</div>`;
+  const ms = timeCheck(app);
+  const method = `<div><p class="section-label">${esc(t("mTitle"))}</p><p class="form-hint">${esc(t("formula"))}</p><p class="form-hint num">${esc(t("timed")(POLICIES.length, LINES, ms < 1 ? ms.toFixed(2) : ms.toFixed(1)))}</p></div>`;
+  const cs = concentration();
+  const conc = `<div><p class="section-label">${esc(t("cTitle"))}</p><p class="form-hint">${esc(t("cHint"))}</p>${cs.map(c => { const pc = Math.round(c.peak / LIMIT * 100); return `<div class="q-conc"><div class="pbar-top"><span><b>${esc(L(ENT[c.id].name))}</b> <small>${esc(t("cRow")(c.n, dfmt(c.at)))}</small></span><b class="num">${pc}%</b></div><div class="track" style="height:8px"><div class="fill" style="width:${Math.min(100, pc)}%"></div></div></div>`; }).join("")}</div>`;
+  return `<section class="answer ${v === "pending" ? "amber" : v}" aria-live="polite"><span class="tag">${esc(t("sTag")[v])}</span><h2>${esc(head)}</h2>${line ? `<p>${esc(line)}</p>` : ""}</section>
+    <details class="q-details"${(v === "pending") ? " open" : ""}><summary>${esc(t("sDetails"))}</summary><div class="d-body q-body">
+      ${confirms || unclear ? `<div><p class="section-label">${esc(t("sConfirm"))}</p><div class="checks">${confirms}${unclear}</div></div>` : ""}
+      ${outage}
+      ${graph}
+      ${links}
+      ${decide}
+      ${conc}
+      ${method}
+      <div><p class="section-label">${esc(t("sRead"))}</p>${read}${Q.ex ? `<p class="form-hint">${esc(t("sExNote"))}</p>` : ""}</div>
+      <p class="form-hint">${esc(t("sFoot"))}</p>
+      <p class="q-links"><a href="#check">${esc(t("sFull"))}</a><a href="#how">${esc(t("sHow"))}</a></p>
+    </div></details>`;
+}
+function renderSimple() {
+  const el = document.getElementById("view-simple");
+  el.innerHTML = `<section class="q">
+    <h1>${esc(t("sH"))}</h1>
+    <label class="sr" for="qText">${esc(t("sLabel"))}</label>
+    <textarea id="qText" rows="6" placeholder="${esc(t("sPh"))}">${esc(Q.text)}</textarea>
+    <div class="q-actions"><button type="button" class="btn btn-primary btn-lg" data-q="check"${Q.busy ? " disabled" : ""}>${esc(t("sCheck"))}</button><button type="button" class="linkbtn" data-q="ex"${Q.busy ? " disabled" : ""}>${esc(t("sExample"))}</button></div>
+    <div id="qStatus" class="ai-status" role="status">${qStatus()}</div>
+    ${Q.err ? `<p class="ai-warn">${esc(Q.err)}</p>` : ""}
+    <div id="qAns" class="q-ans">${qAnswer()}</div>
+  </section>`;
+}
+function qStatus() { return Q.status ? `${esc(Q.status)}${Q.pct != null ? `<div class="track" style="margin-top:6px;height:6px"><div class="fill now" style="width:${Q.pct}%"></div></div>` : ""}` : ""; }
+async function qCheck() {
+  const box = document.getElementById("qText"); Q.text = box ? box.value : Q.text;
+  if (!Q.text.trim()) { box && box.focus(); return; }
+  Q.err = ""; Q.r = null; Q.ex = false; Q.busy = true; S.match = {}; S.excl = {}; delete S.decision.paste;
+  const which = Q.text.trim() === AI_EX.en.trim() ? "en" : Q.text.trim() === AI_EX.ar.trim() ? "ar" : null;
+  const upd = () => { const st = document.getElementById("qStatus"); if (st) st.innerHTML = qStatus(); };
+  try {
+    if (which && !UqdahAI.isLoaded()) { Q.r = AI_SAVED[which]; Q.ex = true; }
+    else {
+      if (!UqdahAI.isLoaded()) { Q.pct = 0; Q.status = t("sLoading")(0); renderSimple(); let last = -1;
+        await UqdahAI.load(f => { const p = Math.round(f * 100); if (p !== last) { last = p; Q.pct = p; Q.status = t("sLoading")(p); upd(); } }); }
+      Q.pct = null; Q.status = t("sReading"); renderSimple();
+      const r = await UqdahAI.extract(Q.text); await aiSuggest(r); Q.r = r;
+    }
+    if (!Q.r.start) { Q.err = t("sNoDates"); Q.r = null; }
+  } catch (e) {
+    console.warn(e);
+    if (which) { Q.r = AI_SAVED[which]; Q.ex = true; } else Q.err = t("sFail");
+  }
+  Q.busy = false; Q.status = ""; Q.pct = null;
+  renderSimple();
+  const ans = document.getElementById("qAns"); if (ans && ans.firstElementChild) ans.scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+}
+const qv = document.getElementById("view-simple");
+qv.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.q === "ex") { Q.text = AI_EX[S.lang]; Q.r = null; Q.err = ""; renderSimple(); qCheck(); return; }
+  if (b.dataset.q === "check") { qCheck(); return; }
+  if (b.dataset.o != null || b.dataset.x || b.dataset.d) {
+    if (b.dataset.d) S.decision.paste = S.decision.paste === b.dataset.d ? undefined : b.dataset.d;
+    else if (b.dataset.o != null) S.outage = +b.dataset.o; else { if (S.excl[b.dataset.x]) delete S.excl[b.dataset.x]; else S.excl[b.dataset.x] = 1; }
+    const y = window.scrollY; document.getElementById("qAns").innerHTML = qAnswer(); const d2 = qv.querySelector(".q-details"); if (d2) d2.open = true; window.scrollTo(0, y); return;
+  }
+  if (b.dataset.m != null) { if (b.dataset.v) S.match[b.dataset.m] = b.dataset.v; else delete S.match[b.dataset.m]; const d = qv.querySelector(".q-details"); const open = d && d.open; document.getElementById("qAns").innerHTML = qAnswer(); const d2 = qv.querySelector(".q-details"); if (d2 && open) d2.open = true; }
+});
+qv.addEventListener("input", e => { if (e.target.id === "qText") Q.text = e.target.value; });
+qv.addEventListener("keydown", e => { if (e.target.id === "qText" && e.key === "Enter" && (e.ctrlKey || e.metaKey)) qCheck(); });
+
+/* ================= Events ================= */
+document.addEventListener("click", e => {
+  const g = e.target.closest("[data-go]"); if (g) { go(g.dataset.go); return; }
+  const d = e.target.closest("[data-doc]"); if (d) { openDoc(d.dataset.doc, d.dataset.line, d.dataset.part); return; }
+  if (e.target.closest("[data-close]") || e.target.id === "docDlg") { closeDoc(); return; }
+});
+const check = document.getElementById("view-check");
+check.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b || b.dataset.doc) return;
+  if (b.dataset.app != null) {
+    if (b.dataset.app === "custom") { if (!S.custom) seedCustom(APPS[isCustom() ? 0 : S.app]); S.app = "custom"; }
+    else S.app = +b.dataset.app;
+    renderCheck(); return;
+  }
+  if (b.dataset.ai) {
+    if (b.dataset.ai === "run") { runAI(); return; }
+    S.ai.text = AI_EX[b.dataset.ai]; S.ai.result = null; S.ai.fallback = false; S.ai.err = false;
+    const ta = document.getElementById("aiText"); if (ta) ta.value = S.ai.text;
+    const el = document.querySelector(".ai-panel"); if (el) el.outerHTML = aiPanel();
+    return;
+  }
+  if (b.dataset.edit) { seedCustom(APPS[S.app]); S.app = "custom"; renderCheck(); const f = document.getElementById("f_name"); if (f) f.focus(); return; }
+  if (b.dataset.m != null) { if (b.dataset.v) S.match[b.dataset.m] = b.dataset.v; else delete S.match[b.dataset.m]; }
+  else if (b.dataset.d) { const k = curApp().key; S.decision[k] = b.dataset.d; delete S.saved[k]; }
+  else if (b.id === "saveBtn") { const k = curApp().key; S.saved[k] = S.decision[k]; }
+  else return;
+  renderResults();
+});
+check.addEventListener("input", e => {
+  if (e.target.id === "reason") { S.reason[curApp().key] = e.target.value; return; }
+  if (e.target.id === "aiText") { S.ai.text = e.target.value; return; }
+  const k = e.target.dataset.f; if (!k || !S.custom) return;
+  S.custom[k] = e.target.value; renderResults();
+});
+check.addEventListener("submit", e => e.preventDefault());
+function seedCustom(app) {
+  const g = r => app.deps.find(d => d.role === r) || {};
+  S.custom = { name: L(app.name), type: app.type, start: app.start, end: app.end, limit: app.limit, ded: app.ded, cover: app.cover,
+    venue: g("venue").raw || "", power: g("power").raw || "", powerCr: g("power").cr || "", stage: g("stage").raw || "", stageCr: g("stage").cr || "" };
+}
+document.addEventListener("keydown", e => {
+  if (typeof S.tour !== "number") return;
+  if (e.key === "Escape") go("explore");
+  if (e.key === "ArrowRight" && !e.target.closest("input,textarea")) go(S.lang === "ar" ? "back" : "next");
+  if (e.key === "ArrowLeft" && !e.target.closest("input,textarea")) go(S.lang === "ar" ? "next" : "back");
+});
+
+function theme() { const a = document.documentElement.getAttribute("data-theme"); return a || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); }
+function chrome() {
+  document.documentElement.lang = S.lang; document.documentElement.dir = S.lang === "ar" ? "rtl" : "ltr";
+  document.querySelectorAll("[data-i]").forEach(el => el.textContent = t(el.dataset.i));
+  document.getElementById("langBtn").textContent = t("lang");
+  document.getElementById("themeBtn").textContent = theme() === "dark" ? t("light") : t("dark");
+}
+function show(v, navV) {
+  ["simple", "demo", "check", "how"].forEach(n => { document.getElementById("view-" + n).hidden = n !== v; });
+  document.querySelectorAll("nav.views a").forEach(a => a.dataset.view === (navV || v) ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
+}
+function renderAll() { chrome(); renderSimple(); renderDemo(); renderCheck(); renderHow(); renderGuide(false); }
+document.getElementById("langBtn").addEventListener("click", () => { S.lang = S.lang === "en" ? "ar" : "en"; store.set("uqdah.lang", S.lang); closeDoc(); renderAll(); });
+document.getElementById("themeBtn").addEventListener("click", () => { const n = theme() === "dark" ? "light" : "dark"; document.documentElement.setAttribute("data-theme", n); store.set("uqdah.theme", n); chrome(); });
+const th = store.get("uqdah.theme"); if (th === "dark" || th === "light") document.documentElement.setAttribute("data-theme", th);
+try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", chrome); } catch (e) {}
+function route() {
+  const h = location.hash.slice(1);
+  const v = h === "how" ? "how" : h === "check" ? "check" : h === "demo" ? "demo" : "simple";
+  if (typeof S.tour === "number") { S.tour = null; renderGuide(false); }
+  if (v === "demo") { S.tour = null; renderDemo(); }
+  show(v);
+}
+window.addEventListener("hashchange", route);
+window.UQDAH = { ENT, POLICIES, APPS, analyse };
+renderAll(); route();
+})();
+</script>
+
+</body>
+</html>
