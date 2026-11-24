@@ -302,6 +302,18 @@ tr.hl td { background: var(--amber-soft); }
 .q-conc .fill { background: var(--ink-2); }
 .q-link small .doclink { font-size: 13.5px; }
 .q-choices { margin-top: 8px; }
+.qbar { display: grid; gap: 8px; margin-top: 6px; }
+.qbar-track { position: relative; height: 12px; border-radius: 6px; background: color-mix(in srgb, var(--ink) 10%, transparent); }
+.qbar-track i { position: absolute; top: 0; bottom: 0; }
+.qbar-now { inset-inline-start: 0; background: var(--ink-3); border-start-start-radius: 6px; border-end-start-radius: 6px; }
+.qbar-add { background: var(--qc); }
+.qbar-lim { width: 2px; top: -5px !important; bottom: -5px !important; background: var(--ink); margin-inline-start: -1px; }
+.qbar-key { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 13.5px; color: var(--ink-2); }
+.qbar-key span { display: inline-flex; align-items: center; gap: 6px; }
+.qbar-key b { color: var(--ink); font-weight: 600; }
+.qbar-key i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.k-now { background: var(--ink-3); } .k-add { background: var(--qc); } .k-lim { width: 2px !important; height: 12px !important; background: var(--ink); border-radius: 0 !important; }
+.qbar.red { --qc: var(--red); } .qbar.amber, .qbar.pending { --qc: var(--amber); } .qbar.blue, .qbar.green { --qc: var(--accent); }
 </style>
 
 </head>
@@ -1273,7 +1285,7 @@ Object.assign(T.en, {
     green: () => "No insured event needs the same supplier or venue on these dates.",
     pending: () => "A supplier in the text looks like one already in the portfolio. Confirm it under Details."
   },
-  sEmpty: "The answer appears here.",
+  sEmpty: "The answer appears here.", bToday: "Today", bWith: "With this event", bLimit: "Limit",
   sDetails: "Details", sRead: "What Uqdah read from the text", sConfirm: "To confirm",
   sExNote: "This example was read earlier by the same model. Pasted text is read live in your browser.",
   sFoot: "Made-up test data. Uqdah does not price or decide cover. The underwriter decides. The limit of SAR 10M is an example from the research study.",
@@ -1304,7 +1316,7 @@ Object.assign(T.ar, {
     green: () => "لا توجد فعالية مؤمّن عليها تحتاج المورّد أو الموقع نفسه في هذه التواريخ.",
     pending: () => "اسم مورّد في النص يشبه اسمًا موجودًا في المحفظة. أكّده في التفاصيل."
   },
-  sEmpty: "يظهر الجواب هنا.",
+  sEmpty: "يظهر الجواب هنا.", bToday: "حاليًا", bWith: "مع هذه الفعالية", bLimit: "الحد",
   sDetails: "التفاصيل", sRead: "ما قرأته عُقدة من النص", sConfirm: "للتأكيد",
   sExNote: "هذا المثال قرأه النموذج نفسه مسبقًا. النص الذي تلصقه يُقرأ مباشرة في متصفحك.",
   sFoot: "بيانات تجريبية مصطنعة. عُقدة لا تسعّر ولا تقرر التغطية، القرار للمكتتب. حد 10 ملايين ريال مثال من الدراسة البحثية.",
@@ -1323,6 +1335,13 @@ function qApp() {
   const r = Q.r; if (!r) return null;
   const deps = ["venue", "power", "stage"].filter(k => r[k]).map(k => ({ role: k, raw: r[k].name, cr: r[k].cr || "" }));
   return { key: "paste", name: { en: r.name || "—", ar: r.name || "—" }, type: "conference", start: r.start, end: r.end, limit: r.limit || 0, ded: r.ded || 0, cover: "covered", deps };
+}
+function qBar(f, v) {
+  const max = Math.max(LIMIT * 1.2, f.after * 1.06), pc = x => (x / max * 100).toFixed(2) + "%";
+  return `<div class="qbar ${v}" role="img" aria-label="${esc(t("bToday") + " " + money(f.before) + ", " + t("bWith") + " " + money(f.after) + ", " + t("bLimit") + " " + money(LIMIT))}">
+    <div class="qbar-track"><i class="qbar-now" style="width:${pc(f.before)}"></i><i class="qbar-add" style="inset-inline-start:${pc(f.before)};width:${pc(Math.max(0, f.after - f.before))}"></i><i class="qbar-lim" style="inset-inline-start:${pc(LIMIT)}"></i></div>
+    <div class="qbar-key"><span><i class="k-now"></i>${esc(t("bToday"))} <b class="num">${money(f.before)}</b></span><span><i class="k-add"></i>${esc(t("bWith"))} <b class="num">${money(f.after)}</b></span><span><i class="k-lim"></i>${esc(t("bLimit"))} <b class="num">${money(LIMIT)}</b></span></div>
+  </div>`;
 }
 function qAnswer() {
   const app = qApp(); if (!app) return "";
@@ -1351,7 +1370,7 @@ function qAnswer() {
   const method = `<div><p class="section-label">${esc(t("mTitle"))}</p><p class="form-hint">${esc(t("formula"))}</p><p class="form-hint num">${esc(t("timed")(POLICIES.length, LINES, ms < 1 ? ms.toFixed(2) : ms.toFixed(1)))}</p></div>`;
   const cs = concentration();
   const conc = `<div><p class="section-label">${esc(t("cTitle"))}</p><p class="form-hint">${esc(t("cHint"))}</p>${cs.map(c => { const pc = Math.round(c.peak / LIMIT * 100); return `<div class="q-conc"><div class="pbar-top"><span><b>${esc(L(ENT[c.id].name))}</b> <small>${esc(t("cRow")(c.n, dfmt(c.at)))}</small></span><b class="num">${pc}%</b></div><div class="track" style="height:8px"><div class="fill" style="width:${Math.min(100, pc)}%"></div></div></div>`; }).join("")}</div>`;
-  return `<section class="answer ${v === "pending" ? "amber" : v}" aria-live="polite"><span class="tag">${esc(t("sTag")[v])}</span><h2>${esc(head)}</h2>${line ? `<p>${esc(line)}</p>` : ""}</section>
+  return `<section class="answer ${v === "pending" ? "amber" : v}" aria-live="polite"><span class="tag">${esc(t("sTag")[v])}</span><h2>${esc(head)}</h2>${line ? `<p>${esc(line)}</p>` : ""}${f && f.same.length ? qBar(f, v) : ""}</section>
     <button type="button" class="btn q-more" data-q="det" aria-controls="qDrawer" aria-expanded="${Q.drawer}">${esc(t("sDetails"))}</button><div class="q-body"><div class="q-col">
       ${confirms || unclear ? `<div><p class="section-label">${esc(t("sConfirm"))}</p><div class="checks">${confirms}${unclear}</div></div>` : ""}
       ${outage}

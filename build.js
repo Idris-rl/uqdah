@@ -13,7 +13,7 @@ const PKGS = {
   tf: "@huggingface/transformers@3.5.2",
 };
 const EXPECT = {
-  "index.html": "7a1e87e0a4966e33e1c29f7d63e709559ff7907a",
+  "index.html": "924558946d1b3cc939e9f20d1e1eed911589a16b",
   model: "f3ffca8ddb46b4642cb6004d46fec8d07480173c",
   tokenizer: "0fa80703862a830c3905352086e59299ed06b2b2",
   ortwasm: "37b188561166497e3e34ff3dea8a6a5f81379df2",
